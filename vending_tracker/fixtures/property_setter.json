@@ -1,0 +1,20 @@
+[
+ {
+  "doc_type": "Item",
+  "doctype": "Property Setter",
+  "field_name": "custom_vending_category",
+  "name": "Item-custom_vending_category-in_list_view",
+  "property": "in_list_view",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doc_type": "Item",
+  "doctype": "Property Setter",
+  "field_name": "custom_default_reorder_threshold",
+  "name": "Item-custom_default_reorder_threshold-in_list_view",
+  "property": "in_list_view",
+  "property_type": "Check",
+  "value": "1"
+ }
+]

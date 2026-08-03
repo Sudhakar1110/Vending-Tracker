@@ -1,0 +1,15 @@
+{
+ "color": "#FF9F43",
+ "creation": "2026-01-01 00:00:00.000000",
+ "doctype": "Number Card",
+ "filters_json": "[]",
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Monthly Revenue",
+ "method": "vending_tracker.utils.vending_utils.get_monthly_revenue",
+ "module": "Vending Tracker",
+ "name": "Monthly Revenue",
+ "show_percentage_stats": 1,
+ "stats_time_interval": "Monthly",
+ "type": "Custom"
+}

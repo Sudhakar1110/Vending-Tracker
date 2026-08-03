@@ -1,0 +1,26 @@
+{
+ "add_total_row": 1,
+ "columns": [],
+ "disabled": 0,
+ "doctype": "Report",
+ "filters": "[{\"fieldname\":\"from_date\",\"label\":\"From Date\",\"fieldtype\":\"Date\",\"default\":\"Month Start\"},{\"fieldname\":\"to_date\",\"label\":\"To Date\",\"fieldtype\":\"Date\",\"default\":\"Today\"},{\"fieldname\":\"machine\",\"label\":\"Machine\",\"fieldtype\":\"Link\",\"options\":\"Vending Machine\"}]",
+ "is_standard": "Yes",
+ "json": "{}",
+ "module": "Vending Tracker",
+ "name": "Daily Sales",
+ "query": "SELECT\n\tDATE(se.posting_date) AS \"Date:Date\",\n\tCOUNT(se.name) AS \"Transactions:Int\",\n\tSUM(se.quantity_sold) AS \"Quantity Sold:Float\",\n\tSUM(se.amount) AS \"Revenue:Currency\"\nFROM `tabVending Sales Entry` se\nWHERE se.docstatus = 1\n\tAND se.posting_date BETWEEN %(from_date)s AND %(to_date)s\n\tAND (COALESCE(%(machine)s, '') = '' OR se.machine = %(machine)s)\nGROUP BY DATE(se.posting_date)\nORDER BY DATE(se.posting_date) DESC",
+ "ref_doctype": "Vending Sales Entry",
+ "report_name": "Daily Sales",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "Vending Staff"
+  },
+  {
+   "role": "Vending Manager"
+  },
+  {
+   "role": "Vending Administrator"
+  }
+ ]
+}

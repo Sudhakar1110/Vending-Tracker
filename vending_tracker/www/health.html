@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Vending Tracker — Health</title>
+	<style>
+		body { font-family: "Inter", system-ui, sans-serif; background: #f6f8fa; color: #1f272e; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+		.card { background: #fff; border: 1px solid #e2e6ea; border-radius: 12px; padding: 32px 40px; box-shadow: 0 4px 16px rgba(31, 39, 46, 0.06); text-align: center; }
+		.status { display: inline-block; background: #d4edda; color: #155724; font-weight: 600; border-radius: 12px; padding: 4px 12px; font-size: 13px; margin-bottom: 12px; }
+		h1 { font-size: 20px; margin: 8px 0 4px; }
+		.meta { color: #687178; font-size: 13px; margin: 4px 0; }
+	</style>
+</head>
+<body>
+	<div class="card">
+		<span class="status">● OK</span>
+		<h1>Vending Tracker</h1>
+		<p class="meta">Site: {{ site }}</p>
+		<p class="meta">Frappe: {{ app_version }}</p>
+		<p class="meta">Machines registered: {{ machine_count }}</p>
+	</div>
+</body>
+</html>

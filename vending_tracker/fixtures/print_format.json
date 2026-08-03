@@ -1,0 +1,50 @@
+[
+ {
+  "custom_format": 1,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Print Format",
+  "doc_type": "Vending Sales Entry",
+  "html": "{% include 'vending_tracker/templates/print_formats/vending_sales_entry.html' %}",
+  "module": "Vending Tracker",
+  "name": "Vending Sales Entry",
+  "print_format_type": "Jinja",
+  "standard": "No"
+ },
+ {
+  "custom_format": 1,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Print Format",
+  "doc_type": "Stock Entry",
+  "html": "{% include 'vending_tracker/templates/print_formats/vending_restock_entry.html' %}",
+  "module": "Vending Tracker",
+  "name": "Vending Restock Entry",
+  "print_format_type": "Jinja",
+  "standard": "No"
+ },
+ {
+  "custom_format": 1,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Print Format",
+  "doc_type": "Vending Machine",
+  "html": "{% include 'vending_tracker/templates/print_formats/vending_machine_inventory.html' %}",
+  "module": "Vending Tracker",
+  "name": "Vending Machine Inventory",
+  "print_format_type": "Jinja",
+  "standard": "No"
+ },
+ {
+  "custom_format": 1,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Print Format",
+  "doc_type": "Vending Sales Entry",
+  "html": "{% include 'vending_tracker/templates/print_formats/daily_sales_report.html' %}",
+  "module": "Vending Tracker",
+  "name": "Vending Daily Sales Report",
+  "print_format_type": "Jinja",
+  "standard": "No"
+ }
+]

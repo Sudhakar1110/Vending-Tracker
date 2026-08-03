@@ -1,0 +1,149 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:HL-{YYYY}-{####}",
+ "creation": "2026-01-01 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "machine",
+  "logged_at",
+  "column_break_3",
+  "status",
+  "source",
+  "monitoring_section",
+  "is_online",
+  "battery_level",
+  "column_break_8",
+  "temperature",
+  "error_message",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "machine",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Machine",
+   "options": "Vending Machine",
+   "reqd": 1
+  },
+  {
+   "default": "Now",
+   "fieldname": "logged_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Logged At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Online\nOffline\nMaintenance\nDisabled"
+  },
+  {
+   "default": "Manual",
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Source",
+   "options": "Heartbeat\nHealth Check\nAPI\nManual"
+  },
+  {
+   "fieldname": "monitoring_section",
+   "fieldtype": "Section Break",
+   "label": "Monitoring"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_online",
+   "fieldtype": "Check",
+   "label": "Is Online"
+  },
+  {
+   "fieldname": "battery_level",
+   "fieldtype": "Percent",
+   "label": "Battery Level"
+  },
+  {
+   "fieldname": "column_break_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "temperature",
+   "fieldtype": "Float",
+   "label": "Temperature"
+  },
+  {
+   "fieldname": "error_message",
+   "fieldtype": "Data",
+   "label": "Error Message"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Data",
+   "label": "Notes"
+  }
+ ],
+ "links": [],
+ "modified": "2026-01-01 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Vending Tracker",
+ "name": "Vending Machine Health Log",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Vending Staff",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Vending Manager",
+   "share": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Vending Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "logged_at",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

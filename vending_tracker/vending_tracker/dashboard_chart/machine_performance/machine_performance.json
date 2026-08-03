@@ -1,0 +1,29 @@
+{
+ "aggregate_function_based_on": "amount",
+ "based_on": "posting_date",
+ "chart_name": "Machine Performance",
+ "chart_type": "Group By",
+ "creation": "2026-01-01 00:00:00.000000",
+ "doctype": "Dashboard Chart",
+ "document_type": "Vending Sales Entry",
+ "filters_json": "[[\"docstatus\",\"=\",1]]",
+ "from_date": null,
+ "group_by_based_on": "machine",
+ "group_by_type": "Sum",
+ "is_public": 1,
+ "is_standard": 1,
+ "module": "Vending Tracker",
+ "name": "Machine Performance",
+ "number_of_groups": 10,
+ "parent_document_type": "",
+ "roles": [
+  {"role": "Vending Staff"},
+  {"role": "Vending Manager"},
+  {"role": "Vending Administrator"}
+ ],
+ "time_interval": "Monthly",
+ "timespan": "Last Year",
+ "to_date": null,
+ "type": "Bar",
+ "value_based_on": "amount"
+}

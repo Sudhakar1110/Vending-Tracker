@@ -1,0 +1,16 @@
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "vending_tracker"
+authors = [{ name = "Vending Tracker Contributors" }]
+description = "Enterprise vending machine management for Frappe v15 / ERPNext v15+ — machines, slots, sales, restocks, IoT APIs, dashboards and reports, powered by the native ERPNext inventory engine."
+dependencies = ["frappe"]
+requires-python = ">=3.11"
+readme = "README.md"
+license = { file = "license.txt" }
+dynamic = ["version"]
+
+[tool.flit.sdist]
+include = ["vending_tracker/**"]

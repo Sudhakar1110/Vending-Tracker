@@ -1,0 +1,26 @@
+{
+ "add_total_row": 1,
+ "columns": [],
+ "disabled": 0,
+ "doctype": "Report",
+ "filters": "[{\"fieldname\":\"from_date\",\"label\":\"From Date\",\"fieldtype\":\"Date\",\"default\":\"Year Start\"},{\"fieldname\":\"to_date\",\"label\":\"To Date\",\"fieldtype\":\"Date\",\"default\":\"Today\"},{\"fieldname\":\"machine\",\"label\":\"Machine\",\"fieldtype\":\"Link\",\"options\":\"Vending Machine\"}]",
+ "is_standard": "Yes",
+ "json": "{}",
+ "module": "Vending Tracker",
+ "name": "Monthly Revenue",
+ "query": "SELECT\n\tDATE_FORMAT(se.posting_date, '%Y-%m') AS \"Year-Month\",\n\tDATE_FORMAT(se.posting_date, '%M %Y') AS \"Month\",\n\tCOUNT(se.name) AS \"Transactions:Int\",\n\tSUM(se.quantity_sold) AS \"Quantity Sold:Float\",\n\tSUM(se.amount) AS \"Revenue:Currency\"\nFROM `tabVending Sales Entry` se\nWHERE se.docstatus = 1\n\tAND se.posting_date BETWEEN %(from_date)s AND %(to_date)s\n\tAND (COALESCE(%(machine)s, '') = '' OR se.machine = %(machine)s)\nGROUP BY DATE_FORMAT(se.posting_date, '%Y-%m'), DATE_FORMAT(se.posting_date, '%M %Y')\nORDER BY 1 DESC",
+ "ref_doctype": "Vending Sales Entry",
+ "report_name": "Monthly Revenue",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "Vending Staff"
+  },
+  {
+   "role": "Vending Manager"
+  },
+  {
+   "role": "Vending Administrator"
+  }
+ ]
+}

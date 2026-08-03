@@ -1,0 +1,16 @@
+{
+ "color": "#FF9F43",
+ "creation": "2026-01-01 00:00:00.000000",
+ "doctype": "Number Card",
+ "document_type": "Stock Entry",
+ "filters_json": "[[\"docstatus\",\"=\",0],[\"custom_is_vending_transaction\",\"=\",1],[\"stock_entry_type\",\"in\",[\"Material Receipt\",\"Material Transfer\"]]]",
+ "function": "Count",
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Pending Restocks",
+ "module": "Vending Tracker",
+ "name": "Pending Restocks",
+ "show_percentage_stats": 0,
+ "stats_time_interval": "Daily",
+ "type": "Document Type"
+}

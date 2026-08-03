@@ -1,0 +1,16 @@
+{
+ "color": "#28A745",
+ "creation": "2026-01-01 00:00:00.000000",
+ "doctype": "Number Card",
+ "document_type": "Vending Machine",
+ "filters_json": "[[\"status\",\"!=\",\"Disabled\"]]",
+ "function": "Count",
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Active Machines",
+ "module": "Vending Tracker",
+ "name": "Active Machines",
+ "show_percentage_stats": 1,
+ "stats_time_interval": "Daily",
+ "type": "Document Type"
+}

@@ -1,0 +1,24 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Stock Entry",
+  "enabled": 1,
+  "module": "Vending Tracker",
+  "name": "Stock Entry - Vending Restock",
+  "script": "frappe.ui.form.on(\"Stock Entry\", {\n\tcustom_vending_machine(frm) {\n\t\tif (!frm.doc.custom_vending_machine) {\n\t\t\treturn;\n\t\t}\n\t\tfrappe.call({\n\t\t\tmethod: \"vending_tracker.api.machine.get_machine_warehouse\",\n\t\t\targs: { machine: frm.doc.custom_vending_machine },\n\t\t\tcallback(r) {\n\t\t\t\tif (!r.message) {\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\tfrm.set_value(\"custom_is_vending_transaction\", 1);\n\t\t\t\tif ([\"Material Receipt\", \"Material Transfer\"].includes(frm.doc.stock_entry_type)) {\n\t\t\t\t\tfrm.set_value(\"to_warehouse\", r.message);\n\t\t\t\t} else if (frm.doc.stock_entry_type === \"Material Issue\") {\n\t\t\t\t\tfrm.set_value(\"from_warehouse\", r.message);\n\t\t\t\t}\n\t\t\t\tfrm.refresh_field(\"to_warehouse\");\n\t\t\t\tfrm.refresh_field(\"from_warehouse\");\n\t\t\t},\n\t\t});\n\t},\n\trefresh(frm) {\n\t\tif (frm.doc.custom_is_vending_transaction) {\n\t\t\tfrm.set_headline(__(\"Vending Restock Transaction\"));\n\t\t}\n\t},\n});",
+  "script_type": "Form",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Vending Machine",
+  "enabled": 1,
+  "module": "Vending Tracker",
+  "name": "Vending Machine - IoT Monitor",
+  "script": "frappe.ui.form.on(\"Vending Machine\", {\n\trefresh(frm) {\n\t\tif (frm.is_new()) {\n\t\t\treturn;\n\t\t}\n\t\tfrappe.call({\n\t\t\tmethod: \"vending_tracker.api.machine.get_machine_summary\",\n\t\t\targs: { machine: frm.doc.name },\n\t\t\tcallback(r) {\n\t\t\t\tif (!r.message) {\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\tconst parts = [];\n\t\t\t\tif (r.message.low_stock_count > 0) {\n\t\t\t\t\tparts.push(__(\"{0} low stock slot(s)\", [r.message.low_stock_count]));\n\t\t\t\t}\n\t\t\t\tif (r.message.is_online) {\n\t\t\t\t\tparts.push(__(\"Online\"));\n\t\t\t\t} else {\n\t\t\t\t\tparts.push(__(\"Offline\"));\n\t\t\t\t}\n\t\t\t\tif (parts.length) {\n\t\t\t\t\tfrm.set_headline(parts.join(\" · \"));\n\t\t\t\t}\n\t\t\t},\n\t\t});\n\t},\n});",
+  "script_type": "Form",
+  "view": "Form"
+ }
+]

@@ -1,0 +1,321 @@
+{
+ "charts": [
+  {
+   "chart_name": "Revenue Trend",
+   "label": "Revenue Trend"
+  },
+  {
+   "chart_name": "Sales Trend",
+   "label": "Sales Trend"
+  },
+  {
+   "chart_name": "Machine Performance",
+   "label": "Machine Performance"
+  },
+  {
+   "chart_name": "Product Performance",
+   "label": "Product Performance"
+  },
+  {
+   "chart_name": "Stock Level Trend",
+   "label": "Stock Level Trend"
+  }
+ ],
+ "content": "[{\"id\":\"vh1\",\"type\":\"header\",\"data\":{\"text\":\"Vending Overview\",\"col\":12}},{\"id\":\"nc1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Revenue\",\"col\":4}},{\"id\":\"nc2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today's Revenue\",\"col\":4}},{\"id\":\"nc3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Monthly Revenue\",\"col\":4}},{\"id\":\"nc4\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Active Machines\",\"col\":4}},{\"id\":\"nc5\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Low Stock Products\",\"col\":4}},{\"id\":\"nc6\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending Restocks\",\"col\":4}},{\"id\":\"sp1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"vh2\",\"type\":\"header\",\"data\":{\"text\":\"Performance\",\"col\":12}},{\"id\":\"ch1\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Revenue Trend\",\"col\":8}},{\"id\":\"ch2\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Sales Trend\",\"col\":4}},{\"id\":\"ch3\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Machine Performance\",\"col\":4}},{\"id\":\"ch4\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Product Performance\",\"col\":4}},{\"id\":\"ch5\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Stock Level Trend\",\"col\":4}},{\"id\":\"sp2\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"vh3\",\"type\":\"header\",\"data\":{\"text\":\"Quick Actions\",\"col\":12}},{\"id\":\"sc1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Vending Machine\",\"col\":3}},{\"id\":\"sc2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Sales Entry\",\"col\":3}},{\"id\":\"sc3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Restock Entry\",\"col\":3}},{\"id\":\"sc4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Low Stock Alert\",\"col\":3}},{\"id\":\"sp3\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"vh4\",\"type\":\"header\",\"data\":{\"text\":\"Masters & Reports\",\"col\":12}},{\"id\":\"cd1\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":3}},{\"id\":\"cd2\",\"type\":\"card\",\"data\":{\"card_name\":\"Transactions\",\"col\":3}},{\"id\":\"cd3\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":3}},{\"id\":\"cd4\",\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":3}}]",
+ "creation": "2026-01-01 00:00:00.000000",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "package",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "Vending Tracker",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Masters",
+   "link_count": 0,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Vending Machine",
+   "link_count": 0,
+   "link_to": "Vending Machine",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Machine Product Slot",
+   "link_count": 0,
+   "link_to": "Machine Product Slot",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Item",
+   "link_count": 0,
+   "link_to": "Item",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Transactions",
+   "link_count": 0,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Vending Sales Entry",
+   "link_count": 0,
+   "link_to": "Vending Sales Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Stock Entry",
+   "link_count": 0,
+   "link_to": "Stock Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 0,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "Machine Product Slot",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Low Stock Alert",
+   "link_count": 0,
+   "link_to": "Low Stock Alert",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "Vending Sales Entry",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Sales Summary",
+   "link_count": 0,
+   "link_to": "Sales Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "Vending Sales Entry",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Revenue by Machine",
+   "link_count": 0,
+   "link_to": "Revenue by Machine",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "Vending Machine",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Machine Inventory",
+   "link_count": 0,
+   "link_to": "Machine Inventory",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "Stock Entry",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Restock History",
+   "link_count": 0,
+   "link_to": "Restock History",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "Vending Sales Entry",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Item Performance",
+   "link_count": 0,
+   "link_to": "Item Performance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "Vending Sales Entry",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Revenue by Location",
+   "link_count": 0,
+   "link_to": "Revenue by Location",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "Vending Machine",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Machine Utilization",
+   "link_count": 0,
+   "link_to": "Machine Utilization",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "Vending Sales Entry",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Daily Sales",
+   "link_count": 0,
+   "link_to": "Daily Sales",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "Vending Sales Entry",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Monthly Revenue",
+   "link_count": 0,
+   "link_to": "Monthly Revenue",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Settings",
+   "link_count": 0,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Vending Tracker Settings",
+   "link_count": 0,
+   "link_to": "Vending Tracker Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Workflow",
+   "link_count": 0,
+   "link_to": "Workflow",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Notification",
+   "link_count": 0,
+   "link_to": "Notification",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Role",
+   "link_count": 0,
+   "link_to": "Role",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-01-01 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Vending Tracker",
+ "name": "Vending Tracker",
+ "owner": "Administrator",
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "New",
+   "icon": "box",
+   "label": "New Vending Machine",
+   "link_to": "Vending Machine",
+   "shortcut_name": "New Vending Machine",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
+   "doc_view": "New",
+   "icon": "shopping-cart",
+   "label": "New Sales Entry",
+   "link_to": "Vending Sales Entry",
+   "shortcut_name": "New Sales Entry",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "New",
+   "icon": "truck",
+   "label": "New Restock Entry",
+   "link_to": "Stock Entry",
+   "shortcut_name": "New Restock Entry",
+   "type": "DocType"
+  },
+  {
+   "color": "Red",
+   "doc_view": "",
+   "icon": "alert-triangle",
+   "label": "Low Stock Alert",
+   "link_to": "Low Stock Alert",
+   "shortcut_name": "Low Stock Alert",
+   "type": "Report"
+  }
+ ]
+}

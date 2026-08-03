@@ -1,0 +1,166 @@
+[
+ {
+  "channel": "Email",
+  "condition": "doc.reorder_threshold and doc.current_stock <= doc.reorder_threshold",
+  "docstatus": 0,
+  "doctype": "Notification",
+  "document_type": "Machine Product Slot",
+  "enabled": 1,
+  "event": "Save",
+  "is_standard": 1,
+  "message": "**Low Stock Alert**\n\nSlot **{{ doc.name }}** in machine **{{ doc.machine }}** is running low.\n\n- Item: {{ doc.item }}\n- Current stock: {{ doc.current_stock }}\n- Reorder threshold: {{ doc.reorder_threshold }}",
+  "message_type": "Markdown",
+  "name": "Low Stock",
+  "recipients": [
+   {
+    "receiver_by_role": "Vending Manager"
+   }
+  ],
+  "send_system_notification": 1,
+  "subject": "Low Stock Alert: {{ doc.item }} in {{ doc.machine }}"
+ },
+ {
+  "channel": "Email",
+  "condition": "doc.is_online == 0",
+  "docstatus": 0,
+  "doctype": "Notification",
+  "document_type": "Vending Machine",
+  "enabled": 1,
+  "event": "Value Change",
+  "is_standard": 1,
+  "message": "**Machine Offline**\n\nMachine **{{ doc.machine_name }}** ({{ doc.machine_id }}) has gone offline.\n\n- Status: {{ doc.status }}\n- Last heartbeat: {{ doc.last_heartbeat }}",
+  "message_type": "Markdown",
+  "name": "Machine Offline",
+  "recipients": [
+   {
+    "receiver_by_role": "Vending Manager"
+   }
+  ],
+  "send_system_notification": 1,
+  "subject": "Machine Offline: {{ doc.machine_name }} ({{ doc.machine_id }})",
+  "value_changed": "is_online"
+ },
+ {
+  "channel": "Email",
+  "condition": "doc.next_maintenance_date and frappe.utils.date_diff(doc.next_maintenance_date, frappe.utils.today()) <= 7 and frappe.utils.date_diff(doc.next_maintenance_date, frappe.utils.today()) >= 0",
+  "docstatus": 0,
+  "doctype": "Notification",
+  "document_type": "Vending Machine",
+  "enabled": 1,
+  "event": "Save",
+  "is_standard": 1,
+  "message": "**Maintenance Due**\n\nMachine **{{ doc.machine_name }}** ({{ doc.machine_id }}) is due for maintenance on **{{ doc.next_maintenance_date }}**.\n\n- Location: {{ doc.location }}",
+  "message_type": "Markdown",
+  "name": "Maintenance Due",
+  "recipients": [
+   {
+    "receiver_by_role": "Vending Manager"
+   }
+  ],
+  "send_system_notification": 1,
+  "subject": "Maintenance Due: {{ doc.machine_name }} ({{ doc.machine_id }})"
+ },
+ {
+  "channel": "Email",
+  "condition": "doc.custom_is_vending_transaction == 1 and doc.stock_entry_type in ('Material Receipt', 'Material Transfer')",
+  "docstatus": 0,
+  "doctype": "Notification",
+  "document_type": "Stock Entry",
+  "enabled": 1,
+  "event": "Submit",
+  "is_standard": 1,
+  "message": "**Restock Completed**\n\nStock Entry **{{ doc.name }}** has been submitted.\n\n- Machine: {{ doc.custom_vending_machine }}\n- Type: {{ doc.stock_entry_type }}\n- From: {{ doc.from_warehouse or '—' }}\n- To: {{ doc.to_warehouse or '—' }}",
+  "message_type": "Markdown",
+  "name": "Restock Completed",
+  "recipients": [
+   {
+    "receiver_by_role": "Vending Manager"
+   }
+  ],
+  "send_system_notification": 1,
+  "subject": "Restock Completed: {{ doc.custom_vending_machine }} ({{ doc.name }})"
+ },
+ {
+  "channel": "Email",
+  "condition": "doc.amount >= (frappe.db.get_single_value('Vending Tracker Settings', 'high_sales_threshold') or 500)",
+  "docstatus": 0,
+  "doctype": "Notification",
+  "document_type": "Vending Sales Entry",
+  "enabled": 1,
+  "event": "Submit",
+  "is_standard": 1,
+  "message": "**High Sales Alert**\n\nA high-value vending sale has been recorded.\n\n- Machine: {{ doc.machine }}\n- Item: {{ doc.item }}\n- Quantity: {{ doc.quantity_sold }}\n- Amount: {{ doc.amount }}",
+  "message_type": "Markdown",
+  "name": "High Sales",
+  "recipients": [
+   {
+    "receiver_by_role": "Vending Manager"
+   }
+  ],
+  "send_system_notification": 1,
+  "subject": "High Sales Alert: {{ doc.amount }} at {{ doc.machine }}"
+ },
+ {
+  "channel": "Email",
+  "condition": "doc.status == 'Disabled'",
+  "docstatus": 0,
+  "doctype": "Notification",
+  "document_type": "Vending Machine",
+  "enabled": 1,
+  "event": "Value Change",
+  "is_standard": 1,
+  "message": "**Machine Disabled**\n\nMachine **{{ doc.machine_name }}** ({{ doc.machine_id }}) has been disabled.",
+  "message_type": "Markdown",
+  "name": "Machine Disabled",
+  "recipients": [
+   {
+    "receiver_by_role": "Vending Administrator"
+   }
+  ],
+  "send_system_notification": 1,
+  "subject": "Machine Disabled: {{ doc.machine_name }} ({{ doc.machine_id }})",
+  "value_changed": "status"
+ },
+ {
+  "channel": "Email",
+  "condition": "doc.last_api_status == 'Failed'",
+  "docstatus": 0,
+  "doctype": "Notification",
+  "document_type": "Vending Machine",
+  "enabled": 1,
+  "event": "Value Change",
+  "is_standard": 1,
+  "message": "**API Failure**\n\nThe IoT API endpoint for machine **{{ doc.machine_name }}** ({{ doc.machine_id }}) could not be reached.\n\n- Endpoint: {{ doc.api_endpoint }}",
+  "message_type": "Markdown",
+  "name": "API Failure",
+  "recipients": [
+   {
+    "receiver_by_role": "Vending Administrator"
+   }
+  ],
+  "send_system_notification": 1,
+  "subject": "API Failure: {{ doc.machine_name }} ({{ doc.machine_id }})",
+  "value_changed": "last_api_status"
+ },
+ {
+  "channel": "Email",
+  "condition": "doc.last_sync_status == 'Failed'",
+  "docstatus": 0,
+  "doctype": "Notification",
+  "document_type": "Vending Machine",
+  "enabled": 1,
+  "event": "Value Change",
+  "is_standard": 1,
+  "message": "**IoT Sync Failure**\n\nThe IoT synchronisation for machine **{{ doc.machine_name }}** ({{ doc.machine_id }}) failed on the last run.",
+  "message_type": "Markdown",
+  "name": "IoT Sync Failure",
+  "recipients": [
+   {
+    "receiver_by_role": "Vending Administrator"
+   }
+  ],
+  "send_system_notification": 1,
+  "subject": "IoT Sync Failure: {{ doc.machine_name }} ({{ doc.machine_id }})",
+  "value_changed": "last_sync_status"
+ }
+]

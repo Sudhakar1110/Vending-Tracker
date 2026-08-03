@@ -1,0 +1,77 @@
+[
+ {
+  "default": null,
+  "description": "Product category shown in vending reports and machine catalogues.",
+  "docstatus": 0,
+  "doctype": "Custom Field",
+  "dt": "Item",
+  "fieldname": "custom_vending_category",
+  "fieldtype": "Select",
+  "in_list_view": 1,
+  "in_standard_filter": 1,
+  "label": "Vending Category",
+  "name": "Item-custom_vending_category",
+  "options": "Snacks\nBeverages\nConfectionery\nReady-to-Eat\nCoffee & Tea\nOther"
+ },
+ {
+  "default": "5",
+  "description": "Threshold below which the item is flagged as low stock in vending machines.",
+  "docstatus": 0,
+  "doctype": "Custom Field",
+  "dt": "Item",
+  "fieldname": "custom_default_reorder_threshold",
+  "fieldtype": "Float",
+  "in_list_view": 1,
+  "label": "Default Reorder Threshold",
+  "name": "Item-custom_default_reorder_threshold",
+  "precision": "0"
+ },
+ {
+  "default": "15",
+  "description": "Default slot capacity for machines carrying this item.",
+  "docstatus": 0,
+  "doctype": "Custom Field",
+  "dt": "Item",
+  "fieldname": "custom_slot_capacity",
+  "fieldtype": "Int",
+  "label": "Slot Capacity",
+  "name": "Item-custom_slot_capacity"
+ },
+ {
+  "description": "Set automatically for stock entries linked to vending machines.",
+  "docstatus": 0,
+  "doctype": "Custom Field",
+  "dt": "Stock Entry",
+  "fieldname": "custom_is_vending_transaction",
+  "fieldtype": "Check",
+  "label": "Vending Transaction",
+  "name": "Stock Entry-custom_is_vending_transaction",
+  "no_copy": 1,
+  "read_only": 1
+ },
+ {
+  "description": "Vending machine this stock entry belongs to.",
+  "docstatus": 0,
+  "doctype": "Custom Field",
+  "dt": "Stock Entry",
+  "fieldname": "custom_vending_machine",
+  "fieldtype": "Link",
+  "in_standard_filter": 1,
+  "label": "Vending Machine",
+  "name": "Stock Entry-custom_vending_machine",
+  "no_copy": 1,
+  "options": "Vending Machine"
+ },
+ {
+  "description": "Link to the originating vending document (e.g. a sales entry).",
+  "docstatus": 0,
+  "doctype": "Custom Field",
+  "dt": "Stock Entry",
+  "fieldname": "custom_vending_source_document",
+  "fieldtype": "Data",
+  "label": "Vending Source Document",
+  "name": "Stock Entry-custom_vending_source_document",
+  "no_copy": 1,
+  "read_only": 1
+ }
+]

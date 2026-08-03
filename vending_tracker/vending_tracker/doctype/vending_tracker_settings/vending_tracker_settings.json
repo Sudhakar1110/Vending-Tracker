@@ -1,0 +1,144 @@
+{
+ "actions": [],
+ "creation": "2026-01-01 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "general_section",
+  "default_company",
+  "auto_create_warehouse",
+  "offline_after_minutes",
+  "iot_sync_enabled",
+  "notification_section",
+  "low_stock_enabled",
+  "high_sales_threshold",
+  "notify_via_email",
+  "send_sms",
+  "low_stock_email_to"
+ ],
+ "fields": [
+  {
+   "fieldname": "general_section",
+   "fieldtype": "Section Break",
+   "label": "General"
+  },
+  {
+   "fieldname": "default_company",
+   "fieldtype": "Link",
+   "label": "Default Company",
+   "options": "Company"
+  },
+  {
+   "default": "1",
+   "fieldname": "auto_create_warehouse",
+   "fieldtype": "Check",
+   "label": "Auto Create Machine Warehouses"
+  },
+  {
+   "default": "30",
+   "description": "A machine with no heartbeat for this many minutes is marked offline.",
+   "fieldname": "offline_after_minutes",
+   "fieldtype": "Int",
+   "label": "Mark Offline After (Minutes)"
+  },
+  {
+   "default": "1",
+   "fieldname": "iot_sync_enabled",
+   "fieldtype": "Check",
+   "label": "IoT Synchronization"
+  },
+  {
+   "fieldname": "notification_section",
+   "fieldtype": "Section Break",
+   "label": "Notifications"
+  },
+  {
+   "default": "1",
+   "fieldname": "low_stock_enabled",
+   "fieldtype": "Check",
+   "label": "Low Stock Notifications"
+  },
+  {
+   "default": "500",
+   "description": "Sales above this amount trigger the High Sales notification.",
+   "fieldname": "high_sales_threshold",
+   "fieldtype": "Currency",
+   "label": "High Sales Threshold",
+   "precision": "2"
+  },
+  {
+   "default": "1",
+   "fieldname": "notify_via_email",
+   "fieldtype": "Check",
+   "label": "Send Email Notifications"
+  },
+  {
+   "default": "0",
+   "description": "Enable only when an SMS gateway is configured on the site (e.g. via a Frappe SMS provider).",
+   "fieldname": "send_sms",
+   "fieldtype": "Check",
+   "label": "Send SMS"
+  },
+  {
+   "description": "Optional single email address that overrides role-based recipients.",
+   "fieldname": "low_stock_email_to",
+   "fieldtype": "Data",
+   "label": "Notification Email"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-01-01 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Vending Tracker",
+ "name": "Vending Tracker Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Vending Staff",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Vending Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Vending Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

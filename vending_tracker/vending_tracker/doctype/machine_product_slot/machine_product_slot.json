@@ -1,0 +1,182 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:SLOT-{machine}-{slot_number}",
+ "creation": "2026-01-01 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "slot_details",
+  "machine",
+  "item",
+  "slot_number",
+  "column_break_4",
+  "maximum_capacity",
+  "reorder_threshold",
+  "vending_category",
+  "stock_section",
+  "current_stock",
+  "stock_status",
+  "column_break_9",
+  "is_active",
+  "low_stock_notified",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "slot_details",
+   "fieldtype": "Section Break",
+   "label": "Slot Details"
+  },
+  {
+   "fieldname": "machine",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Machine",
+   "options": "Vending Machine",
+   "reqd": 1
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "get_query": "vending_tracker.utils.vending_utils.item_query",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Item",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "slot_number",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Slot Number",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "item.custom_slot_capacity",
+   "fetch_if_empty": 1,
+   "fieldname": "maximum_capacity",
+   "fieldtype": "Int",
+   "label": "Maximum Capacity"
+  },
+  {
+   "fetch_from": "item.custom_default_reorder_threshold",
+   "fetch_if_empty": 1,
+   "fieldname": "reorder_threshold",
+   "fieldtype": "Float",
+   "label": "Reorder Threshold"
+  },
+  {
+   "fetch_from": "item.custom_vending_category",
+   "fieldname": "vending_category",
+   "fieldtype": "Data",
+   "label": "Vending Category",
+   "read_only": 1
+  },
+  {
+   "fieldname": "stock_section",
+   "fieldtype": "Section Break",
+   "label": "Stock"
+  },
+  {
+   "description": "Live stock from the ERPNext Stock Ledger (Bin) for this slot's item in the machine warehouse.",
+   "fieldname": "current_stock",
+   "fieldtype": "Float",
+   "label": "Current Stock",
+   "read_only": 1
+  },
+  {
+   "default": "Out of Stock",
+   "fieldname": "stock_status",
+   "fieldtype": "Select",
+   "label": "Stock Status",
+   "options": "In Stock\nLow Stock\nOut of Stock\nOverstock",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active"
+  },
+  {
+   "default": "0",
+   "fieldname": "low_stock_notified",
+   "fieldtype": "Check",
+   "label": "Low Stock Notified",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text",
+   "label": "Notes"
+  }
+ ],
+ "links": [],
+ "modified": "2026-01-01 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Vending Tracker",
+ "name": "Machine Product Slot",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Vending Staff",
+   "share": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Vending Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Vending Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

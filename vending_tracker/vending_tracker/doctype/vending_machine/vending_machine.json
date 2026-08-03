@@ -1,0 +1,259 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:machine_id",
+ "creation": "2026-01-01 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "details_section",
+  "machine_id",
+  "machine_name",
+  "column_break_2",
+  "company",
+  "machine_type",
+  "status",
+  "integration_section",
+  "location",
+  "contact_person",
+  "linked_warehouse",
+  "column_break_7",
+  "iot_enabled",
+  "api_endpoint",
+  "iot_token",
+  "high_sales_threshold",
+  "next_maintenance_date",
+  "monitoring_section",
+  "is_online",
+  "last_heartbeat",
+  "column_break_12",
+  "battery_level",
+  "temperature",
+  "last_api_status",
+  "last_sync_status",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "details_section",
+   "fieldtype": "Section Break",
+   "label": "Machine Details"
+  },
+  {
+   "bold": 1,
+   "fieldname": "machine_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Machine ID",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "machine_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Machine Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "default": "Snack",
+   "fieldname": "machine_type",
+   "fieldtype": "Select",
+   "label": "Machine Type",
+   "options": "Snack\nBeverage\nCoffee\nCombo\nOther"
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Active\nMaintenance\nOffline\nDisabled"
+  },
+  {
+   "fieldname": "integration_section",
+   "fieldtype": "Section Break",
+   "label": "ERPNext Integration"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Link",
+   "label": "Location",
+   "options": "Address"
+  },
+  {
+   "fieldname": "contact_person",
+   "fieldtype": "Link",
+   "label": "Contact Person",
+   "options": "Contact"
+  },
+  {
+   "description": "Dedicated ERPNext warehouse for this machine. Auto-created when empty if 'Auto Create Machine Warehouses' is enabled in Vending Tracker Settings.",
+   "fieldname": "linked_warehouse",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Linked Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "column_break_7",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "iot_enabled",
+   "fieldtype": "Check",
+   "label": "IoT Enabled"
+  },
+  {
+   "description": "Endpoint polled by the IoT synchronisation scheduler job.",
+   "fieldname": "api_endpoint",
+   "fieldtype": "Data",
+   "label": "API Endpoint"
+  },
+  {
+   "fieldname": "iot_token",
+   "fieldtype": "Data",
+   "label": "IoT Token",
+   "read_only": 1
+  },
+  {
+   "default": "500",
+   "fieldname": "high_sales_threshold",
+   "fieldtype": "Currency",
+   "label": "High Sales Threshold",
+   "precision": "2"
+  },
+  {
+   "fieldname": "next_maintenance_date",
+   "fieldtype": "Date",
+   "label": "Next Maintenance Date"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "monitoring_section",
+   "fieldtype": "Section Break",
+   "label": "IoT Monitoring"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_online",
+   "fieldtype": "Check",
+   "label": "Is Online",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_heartbeat",
+   "fieldtype": "Datetime",
+   "label": "Last Heartbeat",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "battery_level",
+   "fieldtype": "Percent",
+   "label": "Battery Level",
+   "read_only": 1
+  },
+  {
+   "fieldname": "temperature",
+   "fieldtype": "Float",
+   "label": "Temperature",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_api_status",
+   "fieldtype": "Select",
+   "label": "Last API Status",
+   "options": "\nSuccess\nFailed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_sync_status",
+   "fieldtype": "Select",
+   "label": "Last IoT Sync Status",
+   "options": "\nSuccess\nFailed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text",
+   "label": "Notes"
+  }
+ ],
+ "links": [],
+ "modified": "2026-01-01 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Vending Tracker",
+ "name": "Vending Machine",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Vending Staff",
+   "share": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Vending Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Vending Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "machine_id, machine_name, status",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "machine_name",
+ "track_changes": 1
+}

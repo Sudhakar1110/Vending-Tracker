@@ -1,0 +1,73 @@
+{%- set machine = frappe.get_doc("Vending Machine", doc.machine) if doc.machine else None -%}
+<div class="print-format">
+	<style>
+		.print-format { font-family: "Inter", sans-serif; color: #1F272E; }
+		.header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #2490EF; padding-bottom: 12px; margin-bottom: 18px; }
+		.header-bar h2 { margin: 0; font-size: 20px; color: #17212B; }
+		.header-bar .doc-number { font-size: 14px; color: #687178; }
+		.meta-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+		.meta-table td { padding: 4px 8px; font-size: 12px; border: none; }
+		.meta-table td.label { color: #687178; width: 160px; }
+		.items-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+		.items-table th { background: #F4F6F8; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; padding: 8px; border: 1px solid #E2E6EA; }
+		.items-table td { padding: 8px; border: 1px solid #E2E6EA; font-size: 12px; }
+		.items-table .text-right { text-align: right; }
+		.total-row { font-weight: 600; background: #F4F6F8; }
+		.footer { margin-top: 20px; color: #687178; font-size: 11px; border-top: 1px solid #E2E6EA; padding-top: 10px; }
+	</style>
+	<div class="header-bar">
+		<h2>Vending Sales Entry</h2>
+		<div class="doc-number">{{ doc.name }}</div>
+	</div>
+	<table class="meta-table">
+		<tr>
+			<td class="label">Date</td>
+			<td>{{ frappe.utils.formatdate(doc.posting_date) }}</td>
+			<td class="label">Source</td>
+			<td>{{ doc.source }}</td>
+		</tr>
+		<tr>
+			<td class="label">Machine</td>
+			<td>{{ machine.machine_name if machine else doc.machine }}</td>
+			<td class="label">Machine ID</td>
+			<td>{{ machine.machine_id if machine else '' }}</td>
+		</tr>
+		{% if machine and machine.location %}
+		<tr>
+			<td class="label">Location</td>
+			<td colspan="3">{{ machine.location }}</td>
+		</tr>
+		{% endif %}
+	</table>
+	<table class="items-table">
+		<thead>
+			<tr>
+				<th>Item</th>
+				<th>Item Name</th>
+				<th class="text-right">Quantity</th>
+				<th class="text-right">Rate</th>
+				<th class="text-right">Amount</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>{{ doc.item }}</td>
+				<td>{{ frappe.db.get_value("Item", doc.item, "item_name") or '' }}</td>
+				<td class="text-right">{{ doc.quantity_sold }}</td>
+				<td class="text-right">{{ frappe.utils.fmt_money(doc.rate) }}</td>
+				<td class="text-right">{{ frappe.utils.fmt_money(doc.amount) }}</td>
+			</tr>
+		</tbody>
+		<tfoot>
+			<tr class="total-row">
+				<td colspan="4" class="text-right">Total</td>
+				<td class="text-right">{{ frappe.utils.fmt_money(doc.amount) }}</td>
+			</tr>
+		</tfoot>
+	</table>
+	{% if doc.remarks %}<p style="font-size: 12px;"><b>Remarks:</b> {{ doc.remarks }}</p>{% endif %}
+	{% if doc.stock_entry %}
+	<p style="font-size: 12px;"><b>Stock Entry:</b> {{ doc.stock_entry }}</p>
+	{% endif %}
+	<div class="footer">Generated on {{ frappe.utils.now_datetime() }} · Vending Tracker</div>
+</div>

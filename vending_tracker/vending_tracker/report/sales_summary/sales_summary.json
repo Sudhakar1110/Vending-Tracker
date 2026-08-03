@@ -1,0 +1,18 @@
+{
+ "add_total_row": 1,
+ "columns": [],
+ "disabled": 0,
+ "doctype": "Report",
+ "is_standard": "Yes",
+ "json": "{}",
+ "module": "Vending Tracker",
+ "name": "Sales Summary",
+ "ref_doctype": "Vending Sales Entry",
+ "report_name": "Sales Summary",
+ "report_type": "Script Report",
+ "roles": [
+  {"role": "Vending Staff"},
+  {"role": "Vending Manager"},
+  {"role": "Vending Administrator"}
+ ]
+}

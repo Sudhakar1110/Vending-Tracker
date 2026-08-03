@@ -1,0 +1,2 @@
+# vending_tracker patches
+# Add patch module paths here, one per line, in order of execution.
