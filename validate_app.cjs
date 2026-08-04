@@ -143,6 +143,16 @@ for (const dt of fixtureDoctypes) {
     if (data) {
       for (const rec of Array.isArray(data) ? data : [data]) {
         check(rec && rec.doctype === dt, `fixtures/${scrub}.json contains a record whose doctype is not '${dt}'`);
+        if (rec && rec.doctype === "Property Setter") {
+          check(
+            !!rec.doctype_or_field,
+            `fixtures/${scrub}.json: Property Setter '${rec.name}' is missing 'doctype_or_field' (Applied On)`
+          );
+          check(
+            !!rec.doc_type && !!rec.property && !!rec.property_type,
+            `fixtures/${scrub}.json: Property Setter '${rec.name}' is missing doc_type/property/property_type`
+          );
+        }
       }
     }
   }
