@@ -1,3 +1,6 @@
+import json
+import os
+
 import frappe
 
 VENDING_ITEM_GROUP = "Vending Products"
@@ -9,6 +12,26 @@ VENDING_ITEM_GROUP = "Vending Products"
 # /app/workflow-state/{state} and 404s with "Workflow State X not found".
 WORKFLOW_STATES = ["Draft", "Submitted", "Cancelled"]
 
+# Dashboard widgets shipped by this app. A malformed `filters_json` on any of
+# these (e.g. `["="]`) makes the workspace fail with "Invalid filter: =" when
+# the chart widget tries to apply it. The repair below restores the value from
+# the shipped module files.
+DASHBOARD_CHART_NAMES = [
+	"Revenue Trend",
+	"Sales Trend",
+	"Machine Performance",
+	"Product Performance",
+	"Stock Level Trend",
+]
+NUMBER_CARD_NAMES = [
+	"Total Revenue",
+	"Today's Revenue",
+	"Monthly Revenue",
+	"Active Machines",
+	"Low Stock Products",
+	"Pending Restocks",
+]
+
 
 def after_install():
 	"""Runs after `bench --site <site> install-app vending_tracker`.
@@ -18,6 +41,7 @@ def after_install():
 	masters, and seeds optional sample data.
 	"""
 	create_workflow_states()
+	repair_dashboard_widgets()
 	create_vending_item_group()
 	setup_role_permissions()
 	create_sample_data()
@@ -26,10 +50,12 @@ def after_install():
 def after_migrate():
 	"""Runs on every `bench migrate`.
 
-	Re-ensures the workflow states exist so sites that installed the app before
-	they were created (or had them removed) self-heal on the next migrate.
+	Re-ensures the workflow states exist and repairs any corrupted dashboard
+	chart / number card filters, so sites that installed the app before these
+	records were created (or had them removed) self-heal on the next migrate.
 	"""
 	create_workflow_states()
+	repair_dashboard_widgets()
 
 
 def create_workflow_states():
@@ -45,6 +71,121 @@ def create_workflow_states():
 		frappe.get_doc(
 			{"doctype": "Workflow State", "workflow_state_name": state}
 		).insert(ignore_permissions=True)
+
+
+def repair_dashboard_widgets():
+	"""Repair corrupted filters on the app's standard charts and number cards.
+
+	A malformed ``filters_json`` (e.g. ``["="]``) on a Dashboard Chart or
+	Number Card makes the workspace fail with "Invalid filter: =" popups. The
+	stored value is restored from the shipped module files whenever it is not a
+	valid filter list, and malformed per-user chart filter overrides are dropped
+	from ``Dashboard Settings`` so the workspace renders cleanly. Idempotent and
+	safe to run on every migrate.
+	"""
+	_repair_widget_filters("Dashboard Chart", DASHBOARD_CHART_NAMES, "dashboard_chart")
+	_repair_widget_filters("Number Card", NUMBER_CARD_NAMES, "number_card")
+	_repair_dashboard_settings()
+
+
+def _repair_widget_filters(doctype, names, folder):
+	"""Restore ``filters_json`` / ``dynamic_filters_json`` from module files when corrupted."""
+	for name in names:
+		if not frappe.db.exists(doctype, name):
+			continue
+		expected = _module_widget_filters(folder, name)
+		if expected is None:
+			continue
+		expected_filters, expected_dynamic = expected
+
+		current_filters = frappe.db.get_value(doctype, name, "filters_json")
+		if not _is_valid_filter_list(current_filters):
+			frappe.db.set_value(doctype, name, "filters_json", expected_filters)
+			print(f"Vending Tracker: repaired {doctype} '{name}' filters_json")
+
+		current_dynamic = frappe.db.get_value(doctype, name, "dynamic_filters_json")
+		if current_dynamic and not _is_valid_json(current_dynamic):
+			frappe.db.set_value(doctype, name, "dynamic_filters_json", expected_dynamic or "[]")
+			print(f"Vending Tracker: repaired {doctype} '{name}' dynamic_filters_json")
+
+
+def _repair_dashboard_settings():
+	"""Drop malformed per-user chart filter overrides from Dashboard Settings.
+
+	Only this app's own charts are inspected: ``chart_config`` is shared across
+	the whole site, and Report-type charts (including ones from other apps)
+	legitimately store ``filters`` as an object rather than a filter list.
+	"""
+	for name in frappe.get_all("Dashboard Settings", pluck="name"):
+		value = frappe.db.get_value("Dashboard Settings", name, "chart_config")
+		if not value:
+			continue
+		try:
+			chart_config = frappe.parse_json(value)
+		except Exception:
+			continue
+		if not isinstance(chart_config, dict):
+			continue
+		changed = False
+		for chart_name, config in list(chart_config.items()):
+			if chart_name not in DASHBOARD_CHART_NAMES:
+				continue
+			if (
+				isinstance(config, dict)
+				and "filters" in config
+				and not _is_valid_filter_list(config["filters"])
+			):
+				del config["filters"]
+				changed = True
+		if changed:
+			frappe.db.set_value(
+				"Dashboard Settings", name, "chart_config", frappe.as_json(chart_config)
+			)
+			print(f"Vending Tracker: repaired Dashboard Settings '{name}' chart_config")
+
+
+def _module_widget_filters(folder, name):
+	"""Read (filters_json, dynamic_filters_json) from the shipped module JSON."""
+	try:
+		from frappe.modules import get_module_path
+	except ImportError:
+		return None
+	scrub = frappe.scrub(name)
+	path = os.path.join(get_module_path("Vending Tracker"), folder, scrub, f"{scrub}.json")
+	if not os.path.exists(path):
+		return None
+	with open(path) as f:
+		data = json.load(f)
+	return data.get("filters_json", "[]"), data.get("dynamic_filters_json", "[]")
+
+
+def _is_valid_filter_list(value):
+	"""A valid Frappe filter list is an array of [field, op, value, ...] tuples."""
+	if value is None:
+		return True
+	if isinstance(value, str):
+		try:
+			value = frappe.parse_json(value)
+		except Exception:
+			return False
+	if not isinstance(value, list):
+		return False
+	for item in value:
+		if not (
+			isinstance(item, (list, tuple))
+			and len(item) >= 3
+			and isinstance(item[0], str)
+		):
+			return False
+	return True
+
+
+def _is_valid_json(value):
+	try:
+		frappe.parse_json(value or "[]")
+		return True
+	except Exception:
+		return False
 
 
 def create_vending_item_group():
