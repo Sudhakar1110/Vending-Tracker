@@ -17,7 +17,9 @@ def get_context(context):
 
 	context.machines = _machines()
 	context.machine_count = len(context.machines)
-	context.online_count = _safe_count("Vending Machine", {"is_online": 1})
+	# Operational status, not IoT heartbeat: a machine without IoT integration
+	# (iot_enabled = 0) is perfectly functional and should not read as offline.
+	context.active_count = _safe_count("Vending Machine", {"status": "Active"})
 	context.slot_count = _safe_count("Machine Product Slot")
 	context.low_stock_count = _low_stock_count()
 	context.sales_count = _safe_count("Vending Sales Entry", {"docstatus": 1})
@@ -136,18 +138,34 @@ def _machines():
 				"machine_type",
 				"status",
 				"is_online",
+				"iot_enabled",
 				"location",
 				"linked_warehouse",
 				"last_heartbeat",
 			],
 			order_by="machine_id",
 		)
+		status_class = {
+			"Active": "on",
+			"Offline": "off",
+			"Maintenance": "warn",
+			"Disabled": "gray",
+		}
 		for row in rows:
 			row["last_heartbeat_label"] = (
 				format_datetime(row.get("last_heartbeat"))
 				if row.get("last_heartbeat")
 				else "—"
 			)
+			# Operational status (the primary health signal) drives the pill color.
+			row["status_class"] = status_class.get(row.get("status"), "gray")
+			# IoT connectivity is only meaningful for IoT-enabled machines.
+			if row.get("iot_enabled"):
+				row["iot_label"] = "Online" if row.get("is_online") else "Offline"
+				row["iot_class"] = "on" if row.get("is_online") else "off"
+			else:
+				row["iot_label"] = "Disabled"
+				row["iot_class"] = "gray"
 		return rows
 	except Exception:
 		return []

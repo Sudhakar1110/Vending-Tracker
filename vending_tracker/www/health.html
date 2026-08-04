@@ -28,6 +28,8 @@
 		.pill { display: inline-block; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
 		.pill.on { background: var(--green-bg); color: var(--green); }
 		.pill.off { background: var(--red-bg); color: var(--red); }
+		.pill.warn { background: var(--warn-bg); color: var(--warn); }
+		.pill.gray { background: #e9ecef; color: #495057; }
 		.foot { margin-top: 16px; color: var(--gray); font-size: 12px; text-align: center; }
 	</style>
 </head>
@@ -49,7 +51,7 @@
 
 			<div class="grid">
 				<div class="stat"><div class="num">{{ machine_count }}</div><div class="lbl">Machines</div></div>
-				<div class="stat"><div class="num">{{ online_count }}</div><div class="lbl">Online</div></div>
+				<div class="stat"><div class="num">{{ active_count }}</div><div class="lbl">Active</div></div>
 				<div class="stat"><div class="num">{{ slot_count }}</div><div class="lbl">Slots</div></div>
 				<div class="stat {{ 'warn' if low_stock_count else '' }}"><div class="num">{{ low_stock_count }}</div><div class="lbl">Low stock slots</div></div>
 				<div class="stat"><div class="num">{{ sales_count }}</div><div class="lbl">Submitted sales</div></div>
@@ -67,6 +69,7 @@
 						<th>Name</th>
 						<th>Type</th>
 						<th>Status</th>
+						<th>IoT</th>
 						<th>Location</th>
 						<th>Warehouse</th>
 						<th>Last heartbeat</th>
@@ -78,7 +81,8 @@
 						<td>{{ m.machine_id | e }}</td>
 						<td>{{ (m.machine_name or m.machine_id) | e }}</td>
 						<td>{{ (m.machine_type or "—") | e }}</td>
-						<td><span class="pill {{ 'on' if m.is_online else 'off' }}">{{ "Online" if m.is_online else "Offline" }}</span> {{ (m.status or "—") | e }}</td>
+						<td><span class="pill {{ m.status_class }}">{{ (m.status or "—") | e }}</span></td>
+						<td><span class="pill {{ m.iot_class }}">{{ m.iot_label }}</span></td>
 						<td>{{ (m.location or "—") | e }}</td>
 						<td>{{ (m.linked_warehouse or "—") | e }}</td>
 						<td>{{ m.last_heartbeat_label | e }}</td>
