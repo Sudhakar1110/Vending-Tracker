@@ -12,10 +12,9 @@
  "json": "{}",
  "module": "Vending Tracker",
  "name": "Revenue by Machine",
- "query": "SELECT\n\tse.machine AS \"Machine\",\n\tCOUNT(se.name) AS \"Transactions:Int\",\n\tSUM(se.quantity_sold) AS \"Quantity Sold:Float\",\n\tSUM(se.amount) AS \"Revenue:Currency\"\nFROM `tabVending Sales Entry` se\nWHERE se.docstatus = 1\n\tAND se.posting_date BETWEEN COALESCE(%(from_date)s, '1970-01-01') AND COALESCE(%(to_date)s, CURDATE())\n\tAND (COALESCE(%(machine)s, '') = '' OR se.machine = %(machine)s)\nGROUP BY se.machine\nORDER BY SUM(se.amount) DESC",
  "ref_doctype": "Vending Sales Entry",
  "report_name": "Revenue by Machine",
- "report_type": "Query Report",
+ "report_type": "Script Report",
  "roles": [
   {
    "role": "Vending Staff"

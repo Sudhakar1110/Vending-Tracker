@@ -12,10 +12,9 @@
  "json": "{}",
  "module": "Vending Tracker",
  "name": "Restock History",
- "query": "SELECT\n\tse.name AS \"Stock Entry\",\n\tse.posting_date AS \"Date:Date\",\n\tse.stock_entry_type AS \"Stock Entry Type\",\n\tse.custom_vending_machine AS \"Machine\",\n\tse.from_warehouse AS \"Source Warehouse\",\n\tse.to_warehouse AS \"Target Warehouse\",\n\t(SELECT IFNULL(SUM(i.qty), 0) FROM `tabStock Entry Detail` i WHERE i.parent = se.name) AS \"Total Quantity:Float\",\n\t(SELECT COUNT(*) FROM `tabStock Entry Detail` i WHERE i.parent = se.name) AS \"Items:Int\",\n\tse.remarks AS \"Remarks\",\n\tCASE se.docstatus WHEN 0 THEN 'Draft' WHEN 1 THEN 'Submitted' ELSE 'Cancelled' END AS \"Status\"\nFROM `tabStock Entry` se\nWHERE se.custom_is_vending_transaction = 1\n\tAND se.stock_entry_type IN ('Material Receipt', 'Material Transfer')\n\tAND se.posting_date BETWEEN COALESCE(%(from_date)s, '1970-01-01') AND COALESCE(%(to_date)s, CURDATE())\n\tAND (COALESCE(%(machine)s, '') = '' OR se.custom_vending_machine = %(machine)s)\nORDER BY se.posting_date DESC, se.name DESC",
  "ref_doctype": "Stock Entry",
  "report_name": "Restock History",
- "report_type": "Query Report",
+ "report_type": "Script Report",
  "roles": [
   {
    "role": "Vending Staff"
