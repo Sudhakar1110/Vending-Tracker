@@ -281,6 +281,25 @@ for (const file of notificationFiles) {
 }
 
 // ---------------------------------------------------------------------------
+// 5c. Workflow fixtures -> owned doctypes ship a list view script
+// ---------------------------------------------------------------------------
+// Doctypes owned by this app with an active workflow must ship a
+// {doctype}_list.js that surfaces the workflow guide in the list view.
+// Cross-app doctypes (e.g. Stock Entry) are extended from hooks instead.
+const workflowFixture = parsed[rel(path.join(APP, "fixtures", "workflow.json"))];
+if (Array.isArray(workflowFixture)) {
+	for (const wf of workflowFixture) {
+		if (!wf || wf.doctype !== "Workflow" || !wf.is_active || !wf.document_type) continue;
+		const doctypeDir = path.join(APP, "vending_tracker", "doctype", scrub(wf.document_type));
+		if (!fs.existsSync(doctypeDir)) continue; // owned by another app
+		check(
+			fs.existsSync(path.join(doctypeDir, scrub(wf.document_type) + "_list.js")),
+			`doctype/${scrub(wf.document_type)}: active workflow '${wf.name}' — ship ${scrub(wf.document_type)}_list.js with the workflow guide`
+		);
+	}
+}
+
+// ---------------------------------------------------------------------------
 // 6. Workspace content references
 // ---------------------------------------------------------------------------
 const workspaceFiles = walk(path.join(APP, "vending_tracker", "workspace")).filter((f) => f.endsWith(".json"));

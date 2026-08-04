@@ -82,6 +82,12 @@ flow **Draft → Submitted → Cancelled**:
 > standard ERPNext stock roles are included in the transitions, so regular
 > ERPNext users are never locked out (see Notes below for how to opt out).
 
+> **List-view workflow guide** — both list views (Vending Sales Entry and
+> Stock Entry) carry a **Workflow** button in the header. Clicking it opens a
+> dialog with a visual state diagram plus the states and transitions tables,
+> rendered live from the active workflow config, so operators can see who may
+> edit each state and who can submit or cancel.
+
 ### Operational flow (start to end)
 
 ```mermaid

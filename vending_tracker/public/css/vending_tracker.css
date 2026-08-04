@@ -24,3 +24,97 @@
 	background: #fff3cd;
 	color: #856404;
 }
+
+/* Workflow guide — list view dialog */
+
+.vt-wf-dialog {
+	font-size: 12px;
+}
+
+.vt-wf-flow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: stretch;
+	gap: 6px;
+	margin-bottom: 8px;
+}
+
+.vt-wf-card {
+	flex: 1 1 150px;
+	min-width: 140px;
+	border: 1px solid var(--border-color);
+	border-top-width: 3px;
+	border-radius: 8px;
+	padding: 10px 12px;
+	text-align: center;
+	background: var(--bg-light-gray);
+}
+
+.vt-wf-card .vt-wf-state {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--text-color);
+}
+
+.vt-wf-card .vt-wf-sub {
+	margin-top: 2px;
+	font-size: 11px;
+	color: var(--text-muted);
+}
+
+.vt-wf-card .vt-wf-roles {
+	margin-top: 4px;
+	font-size: 10px;
+	color: var(--text-muted);
+}
+
+.vt-wf-card.vt-wf-gray {
+	border-top-color: #6c757d;
+}
+
+.vt-wf-card.vt-wf-green {
+	border-top-color: #28a745;
+}
+
+.vt-wf-card.vt-wf-red {
+	border-top-color: #dc3545;
+}
+
+.vt-wf-arrow {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-width: 56px;
+	padding: 0 2px;
+}
+
+.vt-wf-arrow-glyph {
+	font-size: 22px;
+	line-height: 1;
+	color: var(--text-muted);
+}
+
+.vt-wf-arrow-action {
+	margin-top: 2px;
+	font-size: 10px;
+	text-align: center;
+	color: var(--text-muted);
+}
+
+.vt-wf-section {
+	margin-top: 14px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--text-color);
+}
+
+.vt-wf-table {
+	margin-bottom: 6px;
+}
+
+.vt-wf-table th {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+}
