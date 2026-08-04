@@ -114,7 +114,7 @@ def create_workflow_states():
 		).insert(ignore_permissions=True)
 
 
-def repair_dashboard_widgets():
+def repair_dashboard_widgets(doc=None, method=None):
 	"""Repair corrupted filters / config on the app's standard charts and number cards.
 
 	Malformed ``filters_json`` (e.g. ``["="]`` or 3-element shorthand rows on
@@ -125,10 +125,18 @@ def repair_dashboard_widgets():
 	overrides are dropped from ``Dashboard Settings`` so the workspace renders
 	cleanly. Idempotent and safe to run on every migrate, every widget save
 	(doc_events) and every daily scheduler run.
+
+	``doc`` / ``method`` are accepted because this is also wired as a
+	doc_event (``on_update`` on Dashboard Chart) and Frappe passes the
+	document and event name to doc-event handlers.
 	"""
-	_repair_widget_filters("Dashboard Chart", DASHBOARD_CHART_NAMES, "dashboard_chart", is_chart=True)
-	_repair_widget_filters("Number Card", NUMBER_CARD_NAMES, "number_card")
-	_repair_dashboard_settings()
+	try:
+		_repair_widget_filters("Dashboard Chart", DASHBOARD_CHART_NAMES, "dashboard_chart", is_chart=True)
+		_repair_widget_filters("Number Card", NUMBER_CARD_NAMES, "number_card")
+		_repair_dashboard_settings()
+	except Exception as exc:
+		# Never let the self-healing repair break a save, import or migrate.
+		print(f"Vending Tracker: dashboard widget repair skipped ({type(exc).__name__}: {exc})")
 
 
 def _repair_widget_filters(doctype, names, folder, is_chart=False):
@@ -179,9 +187,15 @@ def _restore_missing_chart_fields(name, module_doc):
 			print(f"Vending Tracker: restored {field} on Dashboard Chart '{name}'")
 
 
-def repair_dashboard_settings():
-	"""doc_events entry point for ``Dashboard Settings`` saves."""
-	_repair_dashboard_settings()
+def repair_dashboard_settings(doc=None, method=None):
+	"""doc_events entry point for ``Dashboard Settings`` saves.
+
+	``doc`` / ``method`` are passed by Frappe when this runs as a doc_event.
+	"""
+	try:
+		_repair_dashboard_settings()
+	except Exception as exc:
+		print(f"Vending Tracker: dashboard settings repair skipped ({type(exc).__name__}: {exc})")
 
 
 def _repair_dashboard_settings():
