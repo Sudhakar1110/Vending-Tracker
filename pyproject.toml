@@ -6,7 +6,15 @@ build-backend = "flit_core.buildapi"
 name = "vending_tracker"
 authors = [{ name = "Vending Tracker Contributors" }]
 description = "Enterprise vending machine management for Frappe v15 / ERPNext v15+ — machines, slots, sales, restocks, IoT APIs, dashboards and reports, powered by the native ERPNext inventory engine."
-dependencies = ["frappe"]
+dependencies = [
+	"frappe>=15.0.0,<16",
+	# Direct pin of frappe v15's gunicorn fork. uv forbids transitive URL
+	# dependencies ("URL dependencies must be expressed as direct requirements
+	# or constraints"), so this must be declared here as a direct requirement.
+	# Keep in sync with frappe's own gunicorn pin if it ever changes.
+	# See frappe/bench#1683.
+	"gunicorn @ git+https://github.com/frappe/gunicorn@bb554053bb87218120d76ab6676af7015680e8b6",
+]
 requires-python = ">=3.11"
 readme = "README.md"
 license = { file = "license.txt" }
