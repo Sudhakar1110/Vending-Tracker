@@ -270,6 +270,11 @@ for (const f of walk(path.join(APP, "vending_tracker", "workspace")).filter((x) 
 for (const file of workspaceFiles) {
   const doc = parsed[rel(file)];
   if (!doc) continue;
+  // v15 sidebar (frappe/desk/desktop.py get_workspace_sidebar_items) only lists
+  // workspaces where `public` is truthy, and the Workspace doctype marks
+  // `title` mandatory — both must be declared or the workspace never appears.
+  check(doc.public === 1, `${rel(file)}: Workspace '${doc.name}' must set "public": 1 to appear in the desk sidebar`);
+  check(!!doc.title, `${rel(file)}: Workspace '${doc.name}' is missing the mandatory 'title'`);
   try {
     const content = JSON.parse(doc.content);
     for (const item of content) {
