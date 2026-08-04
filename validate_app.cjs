@@ -197,11 +197,18 @@ for (const file of reportDirs) {
     check(doc.report_type === "Script Report" || doc.report_type === "Query Report",
       `${rel(file)}: invalid report_type '${doc.report_type}'`);
     if (doc.report_type === "Query Report") {
-      check(!!doc.filters, `${rel(file)}: query report should define 'filters' (JSON string)`);
-      try {
-        JSON.parse(doc.filters);
-      } catch (e) {
-        errors.push(`${rel(file)}: 'filters' is not a valid JSON string: ${e.message}`);
+      // 'filters' is a child-table field (Report Filter rows): it must be an
+      // array, NOT a JSON-encoded string. A string breaks DocType sync with
+      // "'str' object does not support item assignment" during install.
+      check(
+        Array.isArray(doc.filters) && doc.filters.length,
+        `${rel(file)}: query report should define 'filters' as an array of Report Filter rows`
+      );
+      for (const f of Array.isArray(doc.filters) ? doc.filters : []) {
+        check(
+          f && typeof f === "object" && f.fieldname,
+          `${rel(file)}: each 'filters' row must be an object with a 'fieldname'`
+        );
       }
     }
   }

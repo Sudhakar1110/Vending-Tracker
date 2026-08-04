@@ -3,7 +3,11 @@
  "columns": [],
  "disabled": 0,
  "doctype": "Report",
- "filters": "[{\"fieldname\":\"from_date\",\"label\":\"From Date\",\"fieldtype\":\"Date\",\"default\":\"Month Start\"},{\"fieldname\":\"to_date\",\"label\":\"To Date\",\"fieldtype\":\"Date\",\"default\":\"Today\"},{\"fieldname\":\"machine\",\"label\":\"Machine\",\"fieldtype\":\"Link\",\"options\":\"Vending Machine\"}]",
+ "filters": [
+  {"fieldname": "from_date", "label": "From Date", "fieldtype": "Date", "default": "Month Start"},
+  {"fieldname": "to_date", "label": "To Date", "fieldtype": "Date", "default": "Today"},
+  {"fieldname": "machine", "label": "Machine", "fieldtype": "Link", "options": "Vending Machine"}
+ ],
  "is_standard": "Yes",
  "json": "{}",
  "module": "Vending Tracker",
