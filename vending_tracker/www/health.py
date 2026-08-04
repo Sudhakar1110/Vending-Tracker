@@ -28,6 +28,18 @@ def get_context(context):
 	context.pending_restocks = _pending_restocks()
 	context.scheduler_disabled = _scheduler_disabled()
 	context.generated = format_datetime(frappe.utils.now_datetime())
+
+	# Desk routes the portal cards / rows link to (Vending Machine is autonamed
+	# by machine_id, so form URLs are /app/vending-machine/<machine_id>).
+	context.links = {
+		"machines": "/app/vending-machine",
+		"active": "/app/vending-machine?status=Active",
+		"slots": "/app/machine-product-slot",
+		"low_stock": "/app/query-report/Low Stock Alert",
+		"sales": "/app/vending-sales-entry",
+		"pending_restocks": "/app/stock-entry",
+	}
+	context.desk_workspace_url = "/app/vending-tracker"
 	return context
 
 
@@ -133,6 +145,7 @@ def _machines():
 		rows = frappe.db.get_all(
 			"Vending Machine",
 			fields=[
+				"name",
 				"machine_id",
 				"machine_name",
 				"machine_type",
@@ -155,6 +168,7 @@ def _machines():
 			"Disabled": "gray",
 		}
 		for row in rows:
+			row["desk_url"] = f"/app/vending-machine/{row.get('name') or row.get('machine_id')}"
 			row["last_heartbeat_label"] = (
 				format_datetime(row.get("last_heartbeat"))
 				if row.get("last_heartbeat")

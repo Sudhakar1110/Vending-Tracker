@@ -15,7 +15,9 @@
 		h1 { font-size: 20px; margin: 0 0 4px; }
 		.meta { color: var(--gray); font-size: 13px; margin: 2px 0; }
 		.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
-		.stat { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; background: #fbfcfd; }
+		.stat-link { display: block; text-decoration: none; color: inherit; }
+		.stat { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; background: #fbfcfd; transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease; }
+		.stat-link:hover .stat { border-color: #b6c2cf; box-shadow: 0 4px 12px rgba(31, 39, 46, 0.1); transform: translateY(-1px); }
 		.stat .num { font-size: 21px; font-weight: 700; line-height: 1.2; }
 		.stat .lbl { font-size: 12px; color: var(--gray); margin-top: 3px; }
 		.stat.warn { background: var(--warn-bg); border-color: #ffeeba; }
@@ -32,6 +34,12 @@
 		.batt-bar.batt-warn { background: #ffc107; }
 		.batt-bar.batt-off { background: #dc3545; }
 		.batt-label { margin-left: 6px; font-size: 12px; color: #495057; }
+		.row-link { color: #0366d6; text-decoration: none; font-weight: 500; }
+		.row-link:hover { text-decoration: underline; }
+		tr[data-href] { cursor: pointer; }
+		tr[data-href]:hover td { background: #f6f8fa; }
+		.head-link { margin-left: auto; align-self: center; text-decoration: none; font-size: 13px; font-weight: 600; color: #0366d6; white-space: nowrap; }
+		.head-link:hover { text-decoration: underline; }
 		.pill { display: inline-block; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
 		.pill.on { background: var(--green-bg); color: var(--green); }
 		.pill.off { background: var(--red-bg); color: var(--red); }
@@ -50,6 +58,7 @@
 					<p class="meta">Site: {{ site }} · Frappe {{ app_version or "—" }} · ERPNext {{ erpnext_version or "—" }}</p>
 					<p class="meta">Vending Tracker v{{ tracker_version or "—" }} · Apps: {{ installed_apps | e }}</p>
 				</div>
+				<a class="head-link" href="{{ desk_workspace_url }}">Open Vending Tracker in Desk →</a>
 			</div>
 
 			{% if scheduler_disabled %}
@@ -57,14 +66,14 @@
 			{% endif %}
 
 			<div class="grid">
-				<div class="stat"><div class="num">{{ machine_count }}</div><div class="lbl">Machines</div></div>
-				<div class="stat"><div class="num">{{ active_count }}</div><div class="lbl">Active</div></div>
-				<div class="stat"><div class="num">{{ slot_count }}</div><div class="lbl">Slots</div></div>
-				<div class="stat {{ 'warn' if low_stock_count else '' }}"><div class="num">{{ low_stock_count }}</div><div class="lbl">Low stock slots</div></div>
-				<div class="stat"><div class="num">{{ sales_count }}</div><div class="lbl">Submitted sales</div></div>
-				<div class="stat"><div class="num">{{ todays_revenue_label }}</div><div class="lbl">Today's revenue</div></div>
-				<div class="stat"><div class="num">{{ total_revenue_label }}</div><div class="lbl">Total revenue</div></div>
-				<div class="stat {{ 'warn' if pending_restocks else '' }}"><div class="num">{{ pending_restocks }}</div><div class="lbl">Pending restocks</div></div>
+				<a class="stat-link" href="{{ links.machines }}"><div class="stat"><div class="num">{{ machine_count }}</div><div class="lbl">Machines</div></div></a>
+				<a class="stat-link" href="{{ links.active }}"><div class="stat"><div class="num">{{ active_count }}</div><div class="lbl">Active</div></div></a>
+				<a class="stat-link" href="{{ links.slots }}"><div class="stat"><div class="num">{{ slot_count }}</div><div class="lbl">Slots</div></div></a>
+				<a class="stat-link" href="{{ links.low_stock }}"><div class="stat {{ 'warn' if low_stock_count else '' }}"><div class="num">{{ low_stock_count }}</div><div class="lbl">Low stock slots</div></div></a>
+				<a class="stat-link" href="{{ links.sales }}"><div class="stat"><div class="num">{{ sales_count }}</div><div class="lbl">Submitted sales</div></div></a>
+				<a class="stat-link" href="{{ links.sales }}"><div class="stat"><div class="num">{{ todays_revenue_label }}</div><div class="lbl">Today's revenue</div></div></a>
+				<a class="stat-link" href="{{ links.sales }}"><div class="stat"><div class="num">{{ total_revenue_label }}</div><div class="lbl">Total revenue</div></div></a>
+				<a class="stat-link" href="{{ links.pending_restocks }}"><div class="stat {{ 'warn' if pending_restocks else '' }}"><div class="num">{{ pending_restocks }}</div><div class="lbl">Pending restocks</div></div></a>
 			</div>
 
 			<h2 class="section-title">Machines</h2>
@@ -88,8 +97,8 @@
 				</thead>
 				<tbody>
 					{% for m in machines %}
-					<tr>
-						<td>{{ m.machine_id | e }}</td>
+					<tr data-href="{{ m.desk_url | e }}">
+						<td><a class="row-link" href="{{ m.desk_url | e }}">{{ m.machine_id | e }}</a></td>
 						<td>{{ (m.machine_name or m.machine_id) | e }}</td>
 						<td>{{ (m.machine_type or "—") | e }}</td>
 						<td><span class="pill {{ m.status_class }}">{{ (m.status or "—") | e }}</span></td>
@@ -112,11 +121,21 @@
 				</tbody>
 			</table>
 			</div>
+			<p class="meta" style="margin-top: 10px;"><a class="row-link" href="{{ links.machines }}">View all machines in Desk →</a></p>
 			{% else %}
 			<p class="meta">No machines registered yet.</p>
 			{% endif %}
 		</div>
 		<div class="foot">Generated {{ generated }} · vending_tracker health endpoint</div>
 	</div>
+	<script>
+		// Whole-row click opens the machine form in Desk (the ID cell also links there).
+		document.querySelectorAll("tr[data-href]").forEach(function (tr) {
+			tr.addEventListener("click", function (e) {
+				if (e.target.closest("a")) return; // let the ID link handle itself
+				window.location.href = tr.getAttribute("data-href");
+			});
+		});
+	</script>
 </body>
 </html>
