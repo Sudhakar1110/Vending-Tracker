@@ -1,5 +1,6 @@
 import frappe
-from frappe.utils import flt, format_datetime, nowdate
+from collections import Counter
+from frappe.utils import add_days, flt, format_date, format_datetime, nowdate
 
 # docstatus -> (label, diagram color); pill classes map green/red to on/off.
 DOC_STATUS = {
@@ -51,6 +52,23 @@ def get_context(context):
 
 	# Workflow guide snapshots for the portal modal (mirrors the desk dialog).
 	context.workflows = [w for w in (_workflow("Vending Sales Entry"), _workflow("Stock Entry")) if w]
+
+	# Portal charts: 14-day revenue trend and machine status distribution.
+	context.revenue_days = _revenue_trend()
+	# Portal degrades when the scheduler is off or any machine is Offline/Disabled.
+	context.degraded = bool(
+		context.scheduler_disabled
+		or any(m.get("status") in ("Offline", "Disabled") for m in context.machines)
+	)
+	status_counts = Counter(m.get("status") or "—" for m in context.machines)
+	context.status_dist = [
+		{
+			"status": status,
+			"count": count,
+			"pill_class": {"Active": "on", "Offline": "off", "Maintenance": "warn"}.get(status, "gray"),
+		}
+		for status, count in status_counts.most_common()
+	]
 	return context
 
 
@@ -147,6 +165,38 @@ def _scheduler_disabled():
 		return is_scheduler_disabled()
 	except Exception:
 		return None
+
+
+def _revenue_trend(days=14):
+	"""Daily submitted-sales revenue for the last N days (portal chart)."""
+	try:
+		if not frappe.db.table_exists("Vending Sales Entry"):
+			return []
+		today = nowdate()
+		rows = frappe.db.sql(
+			"""select posting_date, ifnull(sum(amount), 0) as total
+			from `tabVending Sales Entry`
+			where docstatus = 1 and posting_date >= %s
+			group by posting_date""",
+			add_days(today, -(days - 1)),
+			as_dict=True,
+		)
+		by_date = {str(r.posting_date): flt(r.total) for r in rows}
+		peak = max(by_date.values()) if by_date else 0.0
+		out = []
+		for offset in range(days - 1, -1, -1):
+			day = add_days(today, -offset)
+			value = by_date.get(str(day), 0.0)
+			out.append(
+				{
+					"label": format_date(day, "dd MMM"),
+					"amount_label": _money(value),
+					"pct": int(round(value / peak * 100)) if peak else 0,
+				}
+			)
+		return out
+	except Exception:
+		return []
 
 
 def _workflow(doctype):
