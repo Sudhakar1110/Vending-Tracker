@@ -1,7 +1,10 @@
 import json
 import os
+import random
+from datetime import timedelta
 
 import frappe
+from frappe.utils import add_months, get_first_day, getdate, nowdate
 
 VENDING_ITEM_GROUP = "Vending Products"
 
@@ -73,6 +76,24 @@ CHART_CONFIG_FIELDS = [
 	"time_interval", "timespan", "number_of_groups", "type",
 ]
 
+# Demo masters seeded by create_sample_data() (existence-guarded + idempotent).
+DEMO_ITEMS = [
+	{"item_code": "VND-CHIPS-001", "item_name": "Classic Potato Chips", "vending_category": "Snacks", "rate": 25.0},
+	{"item_code": "VND-COLA-002", "item_name": "Cola 330ml Can", "vending_category": "Beverages", "rate": 40.0},
+	{"item_code": "VND-ENERGY-003", "item_name": "Energy Drink 250ml", "vending_category": "Beverages", "rate": 90.0},
+	{"item_code": "VND-BAR-004", "item_name": "Chocolate Bar 50g", "vending_category": "Confectionery", "rate": 35.0},
+	{"item_code": "VND-WATER-005", "item_name": "Bottled Water 500ml", "vending_category": "Beverages", "rate": 20.0},
+	{"item_code": "VND-TRAIL-006", "item_name": "Trail Mix 100g", "vending_category": "Ready-to-Eat", "rate": 60.0},
+]
+DEMO_MACHINES = [
+	{"machine_id": "VM-00001", "machine_name": "Lobby Vending Machine", "machine_type": "Snack"},
+	{"machine_id": "VM-00002", "machine_name": "Cafeteria Vending Machine", "machine_type": "Beverage"},
+	{"machine_id": "VM-00003", "machine_name": "Break Room Vending Machine", "machine_type": "Snack"},
+]
+DEMO_SLOT_CAPACITY = 20
+DEMO_RESTOCK_QTY = 15
+DEMO_SALES_PER_MONTH = 3
+
 
 def after_install():
 	"""Runs after `bench --site <site> install-app vending_tracker`.
@@ -91,12 +112,14 @@ def after_install():
 def after_migrate():
 	"""Runs on every `bench migrate`.
 
-	Re-ensures the workflow states exist and repairs any corrupted dashboard
-	chart / number card filters, so sites that installed the app before these
-	records were created (or had them removed) self-heal on the next migrate.
+	Re-ensures the workflow states exist, repairs any corrupted dashboard
+	chart / number card filters, and seeds demo data on sites that have no
+	submitted sales yet — so the workspace popups and empty charts self-heal
+	without a console.
 	"""
 	create_workflow_states()
 	repair_dashboard_widgets()
+	create_sample_data()
 
 
 def create_workflow_states():
@@ -397,31 +420,42 @@ def setup_role_permissions():
 
 
 def create_sample_data():
-	"""Seed a small set of vending products, prices, one machine and its slots.
+	"""Seed demo masters, machines, warehouse stock and submitted sales entries.
 
-	All lookups are existence-guarded so the function is safe to re-run.
-	Custom fields on Item are applied via fixtures (which may or may not have
-	been synced yet when after_install runs), so they are set only when present.
+	Runs automatically from ``after_install`` and ``after_migrate`` (and the
+	"Seed Demo Data" button on Vending Tracker Settings), so the dashboard
+	charts and reports have data to show without a console. Every step is
+	existence-guarded and idempotent; submitted demo sales are only created when
+	the site has no submitted Vending Sales Entries yet, so real data is never
+	duplicated or clobbered. Failures are printed, never raised, so seeding can
+	never break an install or migrate.
 	"""
-	company = frappe.defaults.get_global_default("company")
-	if not company:
-		return
+	try:
+		company = frappe.defaults.get_global_default("company")
+		if not company:
+			return
 
-	items = [
-		{"item_code": "VND-CHIPS-001", "item_name": "Classic Potato Chips", "vending_category": "Snacks", "rate": 25.0},
-		{"item_code": "VND-COLA-002", "item_name": "Cola 330ml Can", "vending_category": "Beverages", "rate": 40.0},
-		{"item_code": "VND-ENERGY-003", "item_name": "Energy Drink 250ml", "vending_category": "Beverages", "rate": 90.0},
-		{"item_code": "VND-BAR-004", "item_name": "Chocolate Bar 50g", "vending_category": "Confectionery", "rate": 35.0},
-		{"item_code": "VND-WATER-005", "item_name": "Bottled Water 500ml", "vending_category": "Beverages", "rate": 20.0},
-		{"item_code": "VND-TRAIL-006", "item_name": "Trail Mix 100g", "vending_category": "Ready-to-Eat", "rate": 60.0},
-	]
+		created_items = create_demo_items()
+		machines = create_demo_machines(company)
+		create_demo_slots(machines, created_items)
+		create_demo_stock(machines, created_items)
+		create_demo_sales(machines, created_items)
 
+		from vending_tracker.utils.vending_utils import sync_all_slot_stock
+
+		sync_all_slot_stock()
+	except Exception as exc:
+		print(f"Vending Tracker: demo data seeding skipped ({type(exc).__name__}: {exc})")
+
+
+def create_demo_items():
+	"""Create the demo item masters and Standard Selling prices (guarded)."""
 	has_category_field = frappe.db.exists("Custom Field", "Item-custom_vending_category")
 	has_threshold_field = frappe.db.exists("Custom Field", "Item-custom_default_reorder_threshold")
 	has_capacity_field = frappe.db.exists("Custom Field", "Item-custom_slot_capacity")
 
 	created_items = []
-	for it in items:
+	for it in DEMO_ITEMS:
 		if frappe.db.exists("Item", it["item_code"]):
 			created_items.append(it["item_code"])
 			continue
@@ -444,7 +478,7 @@ def create_sample_data():
 		if has_threshold_field:
 			item.custom_default_reorder_threshold = 5
 		if has_capacity_field:
-			item.custom_slot_capacity = 15
+			item.custom_slot_capacity = DEMO_SLOT_CAPACITY
 		item.insert(ignore_permissions=True, ignore_mandatory=True)
 
 		if not frappe.db.exists(
@@ -463,38 +497,170 @@ def create_sample_data():
 
 		created_items.append(item.name)
 
-	if frappe.db.exists("Vending Machine", "VM-00001"):
-		return
+	return created_items
 
+
+def create_demo_machines(company):
+	"""Create (or reuse) the demo vending machines with linked warehouses.
+
+	The dedicated warehouse is ensured explicitly (mirroring the Vending
+	Machine controller) so demo stock and submitted sales work even when the
+	"Auto Create Machine Warehouses" setting is disabled.
+	"""
 	from vending_tracker.utils.vending_utils import generate_iot_token
 
-	machine = frappe.get_doc(
-		{
-			"doctype": "Vending Machine",
-			"machine_id": "VM-00001",
-			"machine_name": "Lobby Vending Machine",
-			"machine_type": "Snack",
-			"status": "Active",
-			"iot_enabled": 1,
-			"company": company,
-			"iot_token": generate_iot_token(),
-		}
-	)
-	machine.insert(ignore_permissions=True)
+	machines = []
+	for m in DEMO_MACHINES:
+		if frappe.db.exists("Vending Machine", m["machine_id"]):
+			machines.append(m["machine_id"])
+		else:
+			machine = frappe.get_doc(
+				{
+					"doctype": "Vending Machine",
+					"machine_id": m["machine_id"],
+					"machine_name": m["machine_name"],
+					"machine_type": m["machine_type"],
+					"status": "Active",
+					"iot_enabled": 0,
+					"company": company,
+					"iot_token": generate_iot_token(),
+				}
+			)
+			machine.flags.ignore_permissions = True
+			machine.insert()
+			machines.append(machine.name)
 
-	for idx, item_code in enumerate(created_items[:6], start=1):
-		if frappe.db.exists(
-			"Machine Product Slot",
-			{"machine": machine.name, "slot_number": idx},
+		_ensure_machine_warehouse(m["machine_id"], company, m["machine_name"])
+	return machines
+
+
+def _ensure_machine_warehouse(machine, company, machine_name):
+	"""Create the machine's dedicated warehouse when missing (idempotent)."""
+	if frappe.db.get_value("Vending Machine", machine, "linked_warehouse"):
+		return
+	if not company:
+		return
+
+	warehouse_name = f"VM - {machine}"
+	if not frappe.db.exists("Warehouse", warehouse_name):
+		wh = frappe.get_doc(
+			{
+				"doctype": "Warehouse",
+				"warehouse_name": f"{machine} - {machine_name}",
+				"company": company,
+				"is_group": 0,
+				"disabled": 0,
+			}
+		)
+		wh.flags.ignore_permissions = True
+		wh.insert()
+	frappe.db.set_value("Vending Machine", machine, "linked_warehouse", warehouse_name)
+
+
+def create_demo_slots(machines, created_items):
+	"""One slot per demo item on every demo machine (guarded)."""
+	for machine in machines:
+		for idx, item_code in enumerate(created_items, start=1):
+			if frappe.db.exists("Machine Product Slot", {"machine": machine, "slot_number": idx}):
+				continue
+			frappe.get_doc(
+				{
+					"doctype": "Machine Product Slot",
+					"machine": machine,
+					"item": item_code,
+					"slot_number": idx,
+					"maximum_capacity": DEMO_SLOT_CAPACITY,
+					"reorder_threshold": 5,
+				}
+			).insert(ignore_permissions=True)
+
+
+def create_demo_stock(machines, created_items):
+	"""One submitted Material Receipt per machine to fill its warehouse."""
+	from vending_tracker.utils.vending_utils import get_machine_warehouse
+
+	for machine in machines:
+		warehouse = get_machine_warehouse(machine)
+		if not warehouse:
+			continue
+		if frappe.db.count(
+			"Stock Entry",
+			{
+				"custom_vending_machine": machine,
+				"docstatus": 1,
+				"stock_entry_type": "Material Receipt",
+			},
 		):
 			continue
-		frappe.get_doc(
-			{
-				"doctype": "Machine Product Slot",
-				"machine": machine.name,
-				"item": item_code,
-				"slot_number": idx,
-				"maximum_capacity": 15,
-				"reorder_threshold": 5,
-			}
-		).insert(ignore_permissions=True)
+
+		company = frappe.db.get_value("Vending Machine", machine, "company")
+		se = frappe.new_doc("Stock Entry")
+		se.stock_entry_type = "Material Receipt"
+		se.company = company
+		se.posting_date = nowdate()
+		se.remarks = f"Demo stock for {machine}"
+		se.custom_vending_machine = machine
+		se.custom_is_vending_transaction = 1
+		for item_code in created_items:
+			se.append(
+				"items",
+				{
+					"item_code": item_code,
+					"qty": DEMO_RESTOCK_QTY,
+					"uom": frappe.db.get_value("Item", item_code, "stock_uom"),
+					"t_warehouse": warehouse,
+					"allow_zero_valuation_rate": 1,
+				},
+			)
+		se.flags.ignore_permissions = True
+		se.insert()
+		se.submit()
+
+
+def create_demo_sales(machines, created_items):
+	"""Submitted sales entries spread across the past 12 months (demo only).
+
+	Only runs when the site has no submitted Vending Sales Entries yet, so it
+	serves as a one-time demo bootstrap and never duplicates real data.
+	"""
+	if frappe.db.count("Vending Sales Entry", {"docstatus": 1}):
+		return
+
+	from vending_tracker.utils.vending_utils import get_selling_rate
+
+	random.seed(7)
+	now = getdate(nowdate())
+	rows = []
+	for month_offset in range(11, -1, -1):
+		month_start = get_first_day(add_months(now, -month_offset))
+		for _ in range(DEMO_SALES_PER_MONTH):
+			posting_date = month_start + timedelta(days=random.randint(0, 27))
+			if posting_date > now:
+				posting_date = now
+			rows.append(
+				{
+					"machine": random.choice(machines),
+					"item": random.choice(created_items),
+					"qty": random.randint(1, 3),
+					"posting_date": posting_date,
+				}
+			)
+
+	for row in sorted(rows, key=lambda r: r["posting_date"]):
+		try:
+			sales_entry = frappe.get_doc(
+				{
+					"doctype": "Vending Sales Entry",
+					"posting_date": row["posting_date"],
+					"posting_time": "10:30:00",
+					"machine": row["machine"],
+					"source": "Manual",
+					"item": row["item"],
+					"quantity_sold": row["qty"],
+				}
+			)
+			sales_entry.flags.ignore_permissions = True
+			sales_entry.insert()
+			sales_entry.submit()
+		except Exception as exc:
+			print(f"Vending Tracker: demo sales entry skipped ({type(exc).__name__}: {exc})")
