@@ -102,6 +102,13 @@
 		.batt-bar.batt-on { background: #22c55e; } .batt-bar.batt-warn { background: #f59e0b; } .batt-bar.batt-off { background: #ef4444; }
 		.batt-label { margin-left: 6px; font-size: 12px; color: #475569; }
 
+		/* sortable table headers */
+		th.sortable { cursor: pointer; user-select: none; }
+		th.sortable:hover { color: var(--ink); }
+		th.sortable::after { content: " ⇅"; font-size: 10px; opacity: 0.5; }
+		th.sorted-asc::after { content: " ▲"; opacity: 1; color: #4f46e5; }
+		th.sorted-desc::after { content: " ▼"; opacity: 1; color: #4f46e5; }
+
 		/* toolbar (search + filter) */
 		.toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
 		.toolbar input[type="search"] { flex: 1 1 220px; min-width: 180px; border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; font-size: 13px; background: #fff; color: var(--ink); }
@@ -356,37 +363,36 @@
 					<option>Disabled</option>
 				</select>
 			</div>
-			{% if machines %}
-			<div class="table-wrap">
-			<table>
+			{% if machines %}			<div class="table-wrap">
+			<table id="vt-machines">
 				<thead>
 					<tr>
-					<th>ID</th>
-					<th>Name</th>
-					<th>Type</th>
-					<th title="Active slots · In stock · Low">Slots</th>
-					<th>Status</th>
-						<th>IoT</th>
-						<th>Battery</th>
-						<th>Temp</th>
-						<th>Last API</th>
-						<th>Location</th>
-						<th>Warehouse</th>
-						<th>Last heartbeat</th>
+						<th class="sortable" data-key="id">ID</th>
+						<th class="sortable" data-key="name">Name</th>
+						<th class="sortable" data-key="type">Type</th>
+						<th class="sortable" data-key="slots" data-type="num" title="Active slots · In stock · Low">Slots</th>
+						<th class="sortable" data-key="status">Status</th>
+						<th class="sortable" data-key="iot">IoT</th>
+						<th class="sortable" data-key="battery" data-type="num">Battery</th>
+						<th class="sortable" data-key="temp" data-type="num">Temp</th>
+						<th class="sortable" data-key="api">Last API</th>
+						<th class="sortable" data-key="location">Location</th>
+						<th class="sortable" data-key="warehouse">Warehouse</th>
+						<th class="sortable" data-key="heartbeat" data-type="num">Last heartbeat</th>
 					</tr>
 				</thead>
 				<tbody>
 					{% for m in machines %}
 					<tr data-href="{{ m.desk_url | e }}" data-status="{{ (m.status or '') | lower | e }}">
-						<td><a class="row-link" href="{{ m.desk_url | e }}"><span class="id-chip">{{ m.machine_id | e }}</span></a></td>
-						<td>{{ (m.machine_name or m.machine_id) | e }}</td>
-						<td>{{ (m.machine_type or "—") | e }}</td>
-						<td title="Active · In stock · Low">
+						<td data-key="id" data-sort="{{ m.machine_id | e }}"><a class="row-link" href="{{ m.desk_url | e }}"><span class="id-chip">{{ m.machine_id | e }}</span></a></td>
+						<td data-key="name" data-sort="{{ (m.machine_name or m.machine_id) | lower | e }}">{{ (m.machine_name or m.machine_id) | e }}</td>
+						<td data-key="type" data-sort="{{ (m.machine_type or '') | lower | e }}">{{ (m.machine_type or "—") | e }}</td>
+						<td data-key="slots" data-sort="{{ m.slot_total }}" title="Active · In stock · Low">
 							<span class="slot-chip">{{ m.slot_total }}</span><span class="slot-chip ok">{{ m.slot_in_stock }}</span><span class="slot-chip {{ 'warn' if m.slot_low else 'gray' }}">{{ m.slot_low }}</span>
 						</td>
-						<td><span class="pill {{ m.status_class }}">{{ (m.status or "—") | e }}</span></td>
-						<td><span class="pill {{ m.iot_class }}">{{ m.iot_label }}</span></td>
-						<td>
+						<td data-key="status" data-sort="{{ (m.status or '') | lower | e }}"><span class="pill {{ m.status_class }}">{{ (m.status or "—") | e }}</span></td>
+						<td data-key="iot" data-sort="{{ m.iot_label | lower | e }}"><span class="pill {{ m.iot_class }}">{{ m.iot_label }}</span></td>
+						<td data-key="battery" data-sort="{{ m.battery_pct if m.battery_pct is not none else -1 }}">
 							{% if m.battery_pct is not none %}
 							<span class="batt"><span class="batt-bar batt-{{ m.battery_class }}" style="width: {{ m.battery_pct }}%"></span></span>
 							<span class="batt-label">{{ m.battery_label | e }}</span>
@@ -394,11 +400,11 @@
 							—
 							{% endif %}
 						</td>
-						<td>{{ m.temperature_label | e }}</td>
-						<td><span class="pill {{ m.api_status_class }}">{{ m.api_status_label | e }}</span></td>
-						<td>{{ (m.location or "—") | e }}</td>
-						<td>{{ (m.linked_warehouse or "—") | e }}</td>
-						<td>
+						<td data-key="temp" data-sort="{{ m.temp_num }}">{{ m.temperature_label | e }}</td>
+						<td data-key="api" data-sort="{{ (m.api_status_label or '') | lower | e }}"><span class="pill {{ m.api_status_class }}">{{ m.api_status_label | e }}</span></td>
+						<td data-key="location" data-sort="{{ (m.location or '') | lower | e }}">{{ (m.location or "—") | e }}</td>
+						<td data-key="warehouse" data-sort="{{ (m.linked_warehouse or '') | lower | e }}">{{ (m.linked_warehouse or "—") | e }}</td>
+						<td data-key="heartbeat" data-sort="{{ m.heartbeat_ts }}">
 						{% if m.heartbeat_ago %}
 						<span class="pill {{ m.heartbeat_class }}" title="{{ m.last_heartbeat_label | e }}">{{ m.heartbeat_ago }}</span>
 						{% else %}
@@ -517,6 +523,50 @@
 				tr.style.display = okText && okStatus ? "" : "none";
 			});
 		}
+
+		// Click-to-sort on the machines table (strings and numbers).
+		(function () {
+			var table = document.getElementById("vt-machines");
+			if (!table || !table.tBodies.length) return;
+			var tbody = table.tBodies[0];
+			var ths = Array.prototype.slice.call(table.querySelectorAll("th[data-key]"));
+			var sortState = { key: null, dir: 1 };
+
+			ths.forEach(function (th) {
+				th.addEventListener("click", function () {
+					var key = th.getAttribute("data-key");
+					var type = th.getAttribute("data-type") || "str";
+					var dir = sortState.key === key ? -sortState.dir : 1;
+					sortState.key = key;
+					sortState.dir = dir;
+
+					var rows = Array.prototype.slice.call(tbody.rows);
+					rows.sort(function (a, b) {
+						var cell = function (tr) {
+							var td = tr.querySelector('td[data-key="' + key + '"]');
+							return td ? td.getAttribute("data-sort") : "";
+						};
+						var av = cell(a);
+						var bv = cell(b);
+						var cmp;
+						if (type === "num") {
+							cmp = (parseFloat(av) || 0) - (parseFloat(bv) || 0);
+						} else {
+							av = String(av).toLowerCase();
+							bv = String(bv).toLowerCase();
+							cmp = av < bv ? -1 : av > bv ? 1 : 0;
+						}
+						return cmp * dir;
+					});
+					rows.forEach(function (tr) { tbody.appendChild(tr); });
+
+					ths.forEach(function (h) {
+						h.classList.remove("sorted-asc", "sorted-desc");
+					});
+					th.classList.add(dir === 1 ? "sorted-asc" : "sorted-desc");
+				});
+			});
+		})();
 
 		// Auto-refresh toggle (30s), remembered across reloads. localStorage is
 		// guarded so private-browsing modes can never break the script.

@@ -524,6 +524,8 @@ def _machines(slot_map=None):
 			row["temperature_label"] = (
 				f"{flt(temperature):.1f} °C" if reported and temperature is not None else "—"
 			)
+			# Raw numeric value for client-side column sorting (missing = -999).
+			row["temp_num"] = flt(temperature) if reported and temperature is not None else -999
 			api_status = row.get("last_api_status")
 			row["api_status_label"] = api_status or "—"
 			row["api_status_class"] = {"Success": "on", "Failed": "off"}.get(api_status, "gray")
@@ -542,13 +544,19 @@ def _machines(slot_map=None):
 
 					row["heartbeat_ago"] = time_ago(row["last_heartbeat"])
 					stale = (frappe.utils.now_datetime() - row["last_heartbeat"]).days >= 1
+					try:
+						row["heartbeat_ts"] = int(row["last_heartbeat"].timestamp())
+					except Exception:
+						row["heartbeat_ts"] = 0
 				except Exception:
 					row["heartbeat_ago"] = row.get("last_heartbeat_label")
 					stale = False
+					row["heartbeat_ts"] = 0
 				row["heartbeat_class"] = "warn" if stale else "on"
 			else:
 				row["heartbeat_ago"] = None
 				row["heartbeat_class"] = "off"
+				row["heartbeat_ts"] = 0
 		return rows
 	except Exception:
 		return []
