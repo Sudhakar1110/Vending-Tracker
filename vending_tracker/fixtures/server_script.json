@@ -7,7 +7,7 @@
   "enabled": 1,
   "module": "Vending Tracker",
   "name": "Vending_Machine_Status",
-  "script": "# Server Script: Vending_Machine_Status\n# REST API: GET /api/method/Vending_Machine_Status (login required)\nmachines = frappe.db.get_all(\n    \"Vending Machine\",\n    fields=[\n        \"machine_id\",\n        \"machine_name\",\n        \"status\",\n        \"is_online\",\n        \"last_heartbeat\",\n        \"linked_warehouse\",\n    ],\n    order_by=\"machine_id\",\n)\nreturn machines\n",
+  "script": "# Server Script: Vending_Machine_Status\n# REST API: GET /api/method/Vending_Machine_Status (login required)\nfrappe.response[\"message\"] = frappe.db.get_all(\n    \"Vending Machine\",\n    fields=[\n        \"machine_id\",\n        \"machine_name\",\n        \"status\",\n        \"is_online\",\n        \"last_heartbeat\",\n        \"linked_warehouse\",\n    ],\n    order_by=\"machine_id\",\n)\n",
   "script_type": "API"
  },
  {
@@ -18,7 +18,7 @@
   "enabled": 1,
   "module": "Vending Tracker",
   "name": "Vending_Low_Stock_Check",
-  "script": "# Server Script: Vending_Low_Stock_Check\n# REST API: GET /api/method/Vending_Low_Stock_Check (login required)\nfrom vending_tracker.utils.vending_utils import get_low_stock_slots\n\nreturn get_low_stock_slots()\n",
+  "script": "# Server Script: Vending_Low_Stock_Check\n# REST API: GET /api/method/Vending_Low_Stock_Check (login required)\nfrappe.response[\"message\"] = frappe.call(\"vending_tracker.utils.vending_utils.get_low_stock_slots\")\n",
   "script_type": "API"
  }
 ]

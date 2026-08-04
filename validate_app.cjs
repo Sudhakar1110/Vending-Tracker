@@ -153,6 +153,18 @@ for (const dt of fixtureDoctypes) {
             `fixtures/${scrub}.json: Property Setter '${rec.name}' is missing doc_type/property/property_type`
           );
         }
+        if (rec && rec.doctype === "Server Script") {
+          // frappe v15 validates Code fields with compile_command(..., "exec"),
+          // which rejects a top-level `return` ('return' outside function).
+          const scriptLines = (rec.script || "").split(/\n/);
+          const hasTopLevelReturn = scriptLines.some(
+            (l) => /^return\s/.test(l) || l.trim() === "return"
+          );
+          check(
+            !hasTopLevelReturn,
+            `fixtures/${scrub}.json: Server Script '${rec.name}' uses a top-level return; use frappe.response['message'] instead`
+          );
+        }
       }
     }
   }

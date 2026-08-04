@@ -173,6 +173,7 @@ def sync_all_slot_stock():
 	update_slot_stock()
 
 
+@frappe.whitelist()
 def get_low_stock_slots(machine=None):
 	"""Slots currently at or below their reorder threshold (for API / server script)."""
 	filters = {"is_active": 1}
