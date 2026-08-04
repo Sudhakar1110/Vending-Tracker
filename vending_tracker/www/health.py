@@ -335,9 +335,14 @@ def _machines():
 			else:
 				row["iot_label"] = "Disabled"
 				row["iot_class"] = "gray"
+			# Battery / temperature are only written by the IoT heartbeat API, so
+			# they mean nothing until a machine has actually reported. Machines
+			# without a heartbeat still carry the DB default of 0 — treat that as
+			# "not reported" (—) instead of a real 0% / 0.0 °C reading.
+			reported = bool(row.get("last_heartbeat"))
 			# Battery (Percent) — color-coded for monitoring at a glance:
 			# green >= 50%, amber 20–49%, red < 20%.
-			if row.get("battery_level") is not None:
+			if reported and row.get("battery_level") is not None:
 				battery = flt(row.get("battery_level"))
 				row["battery_pct"] = battery
 				row["battery_label"] = f"{battery:.0f}%"
@@ -348,7 +353,7 @@ def _machines():
 				row["battery_class"] = "gray"
 			temperature = row.get("temperature")
 			row["temperature_label"] = (
-				f"{flt(temperature):.1f} °C" if temperature is not None else "—"
+				f"{flt(temperature):.1f} °C" if reported and temperature is not None else "—"
 			)
 			api_status = row.get("last_api_status")
 			row["api_status_label"] = api_status or "—"
