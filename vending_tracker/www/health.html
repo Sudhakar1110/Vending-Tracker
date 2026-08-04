@@ -114,15 +114,18 @@
 		.vt-modal-body { padding: 20px; overflow-y: auto; font-size: 12px; }
 		.vt-wf-block { margin-bottom: 22px; }
 		.vt-wf-title { font-size: 14px; margin: 0 0 10px; }
-		.vt-wf-flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px; margin-bottom: 10px; }
-		.vt-wf-card { flex: 1 1 140px; min-width: 130px; border: 1px solid var(--border); border-top-width: 3px; border-radius: 8px; padding: 10px 12px; text-align: center; background: #f8fafc; }
-		.vt-wf-card .vt-wf-state { font-size: 13px; font-weight: 600; }
-		.vt-wf-card .vt-wf-sub { margin-top: 2px; font-size: 11px; color: var(--muted); }
-		.vt-wf-card .vt-wf-roles { margin-top: 4px; font-size: 10px; color: var(--muted); }
-		.vt-wf-card.vt-wf-gray { border-top-color: #94a3b8; } .vt-wf-card.vt-wf-green { border-top-color: #22c55e; } .vt-wf-card.vt-wf-red { border-top-color: #ef4444; }
-		.vt-wf-arrow { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 48px; padding: 0 2px; }
-		.vt-wf-arrow-glyph { font-size: 20px; line-height: 1; color: var(--muted); }
-		.vt-wf-arrow-action { margin-top: 2px; font-size: 10px; text-align: center; color: var(--muted); }
+		.vt-steps { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+		.vt-step { flex: 1 1 150px; min-width: 150px; background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: flex; gap: 10px; align-items: flex-start; }
+		.vt-step-num { flex: none; width: 24px; height: 24px; border-radius: 50%; background: #6366f1; color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+		.vt-step-name { font-size: 13px; font-weight: 700; }
+		.vt-step-hint { margin-top: 2px; font-size: 11px; color: var(--muted); line-height: 1.4; }
+		.vt-step-arrow { align-self: center; color: var(--muted); font-size: 18px; }
+		.vt-roles { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+		.vt-roles-label { font-size: 12px; color: var(--muted); font-weight: 600; margin-right: 4px; }
+		.vt-role-chip { display: inline-block; border-radius: 999px; background: #e9ecef; color: #495057; padding: 2px 10px; font-size: 11px; font-weight: 600; }
+		.vt-details { margin-top: 4px; }
+		.vt-details summary { cursor: pointer; font-size: 12px; color: #4f46e5; font-weight: 600; }
+		.vt-details[open] summary { margin-bottom: 8px; }
 		.vt-wf-table { margin-bottom: 6px; }
 	</style>
 </head>
@@ -287,49 +290,54 @@
 				{% for wf in workflows %}
 				<div class="vt-wf-block">
 					<h3 class="vt-wf-title">{{ wf.workflow_name | e }} <span class="meta" style="display:inline">({{ wf.document_type | e }})</span></h3>
-					<div class="vt-wf-flow">
+					{% if wf.tagline %}<p class="meta" style="margin-top: -6px; margin-bottom: 10px;">{{ wf.tagline | e }}</p>{% endif %}
+					<div class="vt-steps">
 						{% for s in wf.states %}
-						<div class="vt-wf-card vt-wf-{{ s.status_class }}">
-							<div class="vt-wf-state">{{ s.state | e }}</div>
-							<div class="vt-wf-sub">{{ s.status_label | e }}</div>
-							<div class="vt-wf-roles">{{ s.allow_edit | e }}</div>
+						<div class="vt-step">
+							<span class="vt-step-num">{{ s.step }}</span>
+							<div>
+								<div class="vt-step-name">{{ s.friendly_name | e }}</div>
+								<div class="vt-step-hint">{{ s.friendly_hint | e }}</div>
+							</div>
 						</div>
-						{% if not loop.last %}
-						{% set nxt = wf.states[loop.index] %}
-						{% set acts = wf.transitions | selectattr("state", "equalto", s.state) | selectattr("next_state", "equalto", nxt.state) | map(attribute="action") | unique | list %}
-						<div class="vt-wf-arrow">
-							<span class="vt-wf-arrow-glyph">&rarr;</span>
-							{% if acts %}<span class="vt-wf-arrow-action">{{ acts | join(" / ") | e }}</span>{% endif %}
-						</div>
-						{% endif %}
+						{% if not loop.last %}<span class="vt-step-arrow">&rarr;</span>{% endif %}
 						{% endfor %}
 					</div>
-					<table class="vt-wf-table">
-						<thead><tr><th>State</th><th>DocStatus</th><th>Editable By</th><th>On Entry Updates</th></tr></thead>
-						<tbody>
-							{% for s in wf.states %}
-							<tr>
-								<td><span class="pill {{ s.pill_class }}">{{ s.state | e }}</span></td>
-								<td>{{ s.status_label | e }}</td>
-								<td>{{ s.allow_edit | e }}</td>
-								<td>{{ s.update | e }}</td>
-							</tr>
-							{% endfor %}
-						</tbody>
-					</table>
-					<table class="vt-wf-table">
-						<thead><tr><th>From</th><th>Action</th><th>To</th><th>Allowed Roles</th></tr></thead>
-						<tbody>
-							{% for t in wf.transitions %}
-							<tr>
-								<td>{{ t.state | e }}</td>
-								<td><span class="pill gray">{{ t.action | e }}</span></td>
-								<td>{{ t.next_state | e }}</td>
-								<td>{{ t.roles | e }}</td>
-							</tr>
-							{% endfor %}
-						</tbody>
-					</table>
+					{% if wf.allowed_roles %}
+					<div class="vt-roles">
+						<span class="vt-roles-label">Who can confirm or cancel:</span>
+						{% for r in wf.allowed_roles %}<span class="vt-role-chip">{{ r | e }}</span>{% endfor %}
+					</div>
+					{% endif %}
+					<details class="vt-details">
+						<summary>Technical details (for administrators)</summary>
+						<table class="vt-wf-table">
+							<thead><tr><th>State</th><th>DocStatus</th><th>Editable By</th><th>On Entry Updates</th></tr></thead>
+							<tbody>
+								{% for s in wf.states %}
+								<tr>
+									<td><span class="pill {{ s.pill_class }}">{{ s.state | e }}</span></td>
+									<td>{{ s.status_label | e }}</td>
+									<td>{{ s.allow_edit | e }}</td>
+									<td>{{ s.update | e }}</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+						<table class="vt-wf-table">
+							<thead><tr><th>From</th><th>Action</th><th>To</th><th>Allowed Roles</th></tr></thead>
+							<tbody>
+								{% for t in wf.transitions %}
+								<tr>
+									<td>{{ t.state | e }}</td>
+									<td><span class="pill gray">{{ t.action | e }}</span></td>
+									<td>{{ t.next_state | e }}</td>
+									<td>{{ t.roles | e }}</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</details>
 				</div>
 				{% endfor %}
 				{% else %}

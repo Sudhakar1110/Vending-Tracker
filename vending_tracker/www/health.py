@@ -10,6 +10,36 @@ DOC_STATUS = {
 }
 PILL_CLASS = {"green": "on", "red": "off", "gray": "gray"}
 
+# Plain-language state names/hints for the portal's workflow guide, so a shop
+# owner does not need to know docstatus numbers or role names.
+FRIENDLY_STATES = {
+	0: {"name": "New", "hint": "Being prepared — nothing is changed yet."},
+	1: {"name": "Confirmed", "hint": "Done — stock is updated automatically."},
+	2: {"name": "Cancelled", "hint": "Undone — stock goes back to how it was."},
+}
+FRIENDLY_TAGLINES = {
+	"Vending Sales Entry": "How a sale is recorded",
+	"Stock Entry": "How restocking a machine works",
+}
+
+
+def _roles(value):
+	"""Normalize a Workflow role field to a list of role names.
+
+	This app's fixtures store ``allowed`` / ``allow_edit`` as comma-separated
+	strings, but Frappe v15 defines those fields as Table MultiSelect (a list
+	of ``{"role": ...}`` rows), so accept both shapes.
+	"""
+	if not value:
+		return []
+	if isinstance(value, (list, tuple)):
+		parts = [
+			(r.get("role") or "") if isinstance(r, dict) else str(r)
+			for r in value
+		]
+		value = ",".join(parts)
+	return [r.strip() for r in str(value).split(",") if r.strip()]
+
 
 def get_context(context):
 	"""Site health / status page for monitoring endpoints.
@@ -216,9 +246,12 @@ def _workflow(doctype):
 			return None
 		doc = frappe.get_cached_doc("Workflow", name)
 		states = []
-		for s in sorted(doc.states, key=lambda x: int(x.doc_status or 0)):
+		for idx, s in enumerate(
+			sorted(doc.states, key=lambda x: int(x.doc_status or 0)), start=1
+		):
 			status = int(s.doc_status or 0)
 			label, color = DOC_STATUS.get(status, (f"DocStatus {status}", "gray"))
+			friendly = FRIENDLY_STATES.get(status, {"name": s.state, "hint": ""})
 			states.append(
 				{
 					"state": s.state,
@@ -226,8 +259,11 @@ def _workflow(doctype):
 					"status_label": label,
 					"status_class": color,
 					"pill_class": PILL_CLASS.get(color, "gray"),
-					"allow_edit": s.allow_edit or "—",
+					"allow_edit": ", ".join(_roles(s.allow_edit)) or "—",
 					"update": f"{s.update_field} = {s.update_value}" if s.update_field else "—",
+					"step": idx,
+					"friendly_name": friendly["name"],
+					"friendly_hint": friendly["hint"],
 				}
 			)
 		transitions = [
@@ -235,15 +271,20 @@ def _workflow(doctype):
 				"state": t.state,
 				"action": t.action,
 				"next_state": t.next_state,
-				"roles": t.allowed or "—",
+				"roles": ", ".join(_roles(t.allowed)) or "—",
 			}
 			for t in doc.transitions
 		]
+		allowed_roles = set()
+		for t in doc.transitions:
+			allowed_roles.update(_roles(t.allowed))
 		return {
 			"workflow_name": doc.workflow_name or name,
 			"document_type": doctype,
+			"tagline": FRIENDLY_TAGLINES.get(doctype, ""),
 			"states": states,
 			"transitions": transitions,
+			"allowed_roles": sorted(allowed_roles),
 		}
 	except Exception:
 		return None

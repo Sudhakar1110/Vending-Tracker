@@ -59,6 +59,15 @@ vending_tracker.workflow_guide_html = function (wf, doctype) {
 	const esc = frappe.utils.escape_html;
 	const doc_status_labels = { 0: __("Draft"), 1: __("Submitted"), 2: __("Cancelled") };
 	const doc_status_colors = { 0: "gray", 1: "green", 2: "red" };
+	const friendly_states = {
+		0: { name: __("New"), hint: __("Being prepared — nothing is changed yet.") },
+		1: { name: __("Confirmed"), hint: __("Done — stock is updated automatically.") },
+		2: { name: __("Cancelled"), hint: __("Undone — stock goes back to how it was.") },
+	};
+	const taglines = {
+		"Vending Sales Entry": __("How a sale is recorded"),
+		"Stock Entry": __("How restocking a machine works"),
+	};
 
 	if (!wf || !Array.isArray(wf.states) || !wf.states.length) {
 		return `<div class="text-muted">${__("No active workflow is configured for {0}.", [doctype])}</div>`;
@@ -68,40 +77,45 @@ vending_tracker.workflow_guide_html = function (wf, doctype) {
 	const transitions = Array.isArray(wf.transitions) ? wf.transitions : [];
 
 	const role_list = (value) => {
-		return (value || "")
-			.split(",")
-			.map((r) => r.trim())
-			.filter(Boolean)
-			.join(", ");
+		// Role fields are stored as comma-separated strings in this app's
+		// fixtures, but Frappe v15 defines them as Table MultiSelect (a list of
+		// { role } rows); accept both shapes.
+		const parts = Array.isArray(value)
+			? value.map((r) => (r && typeof r === "object" ? r.role : r))
+			: (value || "").split(",");
+		return parts.map((r) => String(r || "").trim()).filter(Boolean);
 	};
+	const role_text = (value) => role_list(value).join(", ") || "—";
 
-	// --- state flow diagram -------------------------------------------------
-	let flow_html = "";
+	// --- plain-language steps ------------------------------------------------
+	let steps_html = "";
 	states.forEach((state, i) => {
 		const status = cint(state.doc_status);
-		const roles = role_list(state.allow_edit);
-		flow_html += `
-			<div class="vt-wf-card vt-wf-${doc_status_colors[status] || "gray"}">
-				<div class="vt-wf-state">${esc(state.state)}</div>
-				<div class="vt-wf-sub">${esc(doc_status_labels[status] || __("DocStatus {0}", [status]))}</div>
-				<div class="vt-wf-roles">${esc(roles || __("No role"))}</div>
+		const friendly = friendly_states[status] || { name: state.state, hint: "" };
+		steps_html += `
+			<div class="vt-step">
+				<span class="vt-step-num">${i + 1}</span>
+				<div>
+					<div class="vt-step-name">${esc(friendly.name)}</div>
+					<div class="vt-step-hint">${esc(friendly.hint)}</div>
+				</div>
 			</div>`;
 		if (i < states.length - 1) {
-			const next = states[i + 1];
-			const actions = frappe.utils.unique(
-				transitions
-					.filter((t) => t.state === state.state && t.next_state === next.state)
-					.map((t) => t.action)
-			);
-			flow_html += `
-				<div class="vt-wf-arrow">
-					<span class="vt-wf-arrow-glyph">&rarr;</span>
-					${actions.length ? `<span class="vt-wf-arrow-action">${esc(actions.join(" / "))}</span>` : ""}
-				</div>`;
+			steps_html += `<span class="vt-step-arrow">&rarr;</span>`;
 		}
 	});
 
-	// --- states table -------------------------------------------------------
+	// --- who can confirm / cancel -------------------------------------------
+	const allowed_roles = Array.from(
+		new Set(transitions.map((t) => role_list(t.allowed)).flat())
+	).sort();
+	const roles_html = allowed_roles.length
+		? `<div class="vt-roles"><span class="vt-roles-label">${__("Who can confirm or cancel:")}</span>${allowed_roles
+				.map((r) => `<span class="vt-role-chip">${esc(r)}</span>`)
+				.join("")}</div>`
+		: "";
+
+	// --- technical tables (collapsed for admins) -----------------------------
 	const states_rows = states
 		.map((state) => {
 			const status = cint(state.doc_status);
@@ -112,13 +126,12 @@ vending_tracker.workflow_guide_html = function (wf, doctype) {
 				<tr>
 					<td><span class="indicator ${doc_status_colors[status] || "gray"}">${esc(state.state)}</span></td>
 					<td>${esc(doc_status_labels[status] || status)}</td>
-					<td>${esc(role_list(state.allow_edit) || "—")}</td>
+					<td>${esc(role_text(state.allow_edit))}</td>
 					<td>${update}</td>
 				</tr>`;
 		})
 		.join("");
 
-	// --- transitions table --------------------------------------------------
 	const transitions_rows = transitions
 		.map((t) => {
 			return `
@@ -126,38 +139,43 @@ vending_tracker.workflow_guide_html = function (wf, doctype) {
 					<td>${esc(t.state)}</td>
 					<td><span class="label label-default">${esc(t.action)}</span></td>
 					<td>${esc(t.next_state)}</td>
-					<td>${esc(role_list(t.allowed) || "—")}</td>
+					<td>${esc(role_text(t.allowed))}</td>
 				</tr>`;
 		})
 		.join("");
 
 	return `
 		<div class="vt-wf-dialog">
-			<div class="vt-wf-flow">${flow_html}</div>
-			<h6 class="vt-wf-section">${__("Workflow States")}</h6>
-			<table class="table table-bordered vt-wf-table">
-				<thead>
-					<tr>
-						<th>${__("State")}</th>
-						<th>${__("DocStatus")}</th>
-						<th>${__("Editable By")}</th>
-						<th>${__("On Entry Updates")}</th>
-					</tr>
-				</thead>
-				<tbody>${states_rows}</tbody>
-			</table>
-			<h6 class="vt-wf-section">${__("Transitions")}</h6>
-			<table class="table table-bordered vt-wf-table">
-				<thead>
-					<tr>
-						<th>${__("From")}</th>
-						<th>${__("Action")}</th>
-						<th>${__("To")}</th>
-						<th>${__("Allowed Roles")}</th>
-					</tr>
-				</thead>
-				<tbody>${transitions_rows}</tbody>
-			</table>
+			${taglines[doctype] ? `<p class="text-muted">${esc(taglines[doctype])}</p>` : ""}
+			<div class="vt-steps">${steps_html}</div>
+			${roles_html}
+			<details class="vt-details">
+				<summary>${__("Technical details (for administrators)")}</summary>
+				<h6 class="vt-wf-section">${__("Workflow States")}</h6>
+				<table class="table table-bordered vt-wf-table">
+					<thead>
+						<tr>
+							<th>${__("State")}</th>
+							<th>${__("DocStatus")}</th>
+							<th>${__("Editable By")}</th>
+							<th>${__("On Entry Updates")}</th>
+						</tr>
+					</thead>
+					<tbody>${states_rows}</tbody>
+				</table>
+				<h6 class="vt-wf-section">${__("Transitions")}</h6>
+				<table class="table table-bordered vt-wf-table">
+					<thead>
+						<tr>
+							<th>${__("From")}</th>
+							<th>${__("Action")}</th>
+							<th>${__("To")}</th>
+							<th>${__("Allowed Roles")}</th>
+						</tr>
+					</thead>
+					<tbody>${transitions_rows}</tbody>
+				</table>
+			</details>
 		</div>`;
 };
 

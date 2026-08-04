@@ -25,81 +25,100 @@
 	color: #856404;
 }
 
-/* Workflow guide — list view dialog */
+/* Workflow guide — list view dialog (friendly, plain-language steps).
+   Mirrors the styles of the /health portal modal (vending_tracker/www/health.html). */
 
 .vt-wf-dialog {
 	font-size: 12px;
 }
 
-.vt-wf-flow {
+.vt-steps {
 	display: flex;
-	flex-wrap: wrap;
 	align-items: stretch;
-	gap: 6px;
-	margin-bottom: 8px;
+	gap: 8px;
+	flex-wrap: wrap;
+	margin-bottom: 12px;
 }
 
-.vt-wf-card {
+.vt-step {
 	flex: 1 1 150px;
-	min-width: 140px;
-	border: 1px solid var(--border-color);
-	border-top-width: 3px;
-	border-radius: 8px;
-	padding: 10px 12px;
-	text-align: center;
+	min-width: 150px;
 	background: var(--bg-light-gray);
+	border: 1px solid var(--border-color);
+	border-radius: 10px;
+	padding: 12px;
+	display: flex;
+	gap: 10px;
+	align-items: flex-start;
 }
 
-.vt-wf-card .vt-wf-state {
+.vt-step-num {
+	flex: none;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background: #6366f1;
+	color: #fff;
+	font-size: 12px;
+	font-weight: 700;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.vt-step-name {
 	font-size: 13px;
-	font-weight: 600;
+	font-weight: 700;
 	color: var(--text-color);
 }
 
-.vt-wf-card .vt-wf-sub {
+.vt-step-hint {
 	margin-top: 2px;
 	font-size: 11px;
 	color: var(--text-muted);
+	line-height: 1.4;
 }
 
-.vt-wf-card .vt-wf-roles {
-	margin-top: 4px;
-	font-size: 10px;
+.vt-step-arrow {
+	align-self: center;
 	color: var(--text-muted);
+	font-size: 18px;
 }
 
-.vt-wf-card.vt-wf-gray {
-	border-top-color: #6c757d;
-}
-
-.vt-wf-card.vt-wf-green {
-	border-top-color: #28a745;
-}
-
-.vt-wf-card.vt-wf-red {
-	border-top-color: #dc3545;
-}
-
-.vt-wf-arrow {
+.vt-roles {
 	display: flex;
-	flex-direction: column;
 	align-items: center;
-	justify-content: center;
-	min-width: 56px;
-	padding: 0 2px;
+	gap: 6px;
+	flex-wrap: wrap;
+	margin-bottom: 8px;
 }
 
-.vt-wf-arrow-glyph {
-	font-size: 22px;
-	line-height: 1;
+.vt-roles-label {
+	font-size: 12px;
 	color: var(--text-muted);
+	font-weight: 600;
+	margin-right: 4px;
 }
 
-.vt-wf-arrow-action {
-	margin-top: 2px;
-	font-size: 10px;
-	text-align: center;
-	color: var(--text-muted);
+.vt-role-chip {
+	display: inline-block;
+	border-radius: 999px;
+	background: #e9ecef;
+	color: #495057;
+	padding: 2px 10px;
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.vt-details summary {
+	cursor: pointer;
+	font-size: 12px;
+	color: #4f46e5;
+	font-weight: 600;
+}
+
+.vt-details[open] summary {
+	margin-bottom: 8px;
 }
 
 .vt-wf-section {
