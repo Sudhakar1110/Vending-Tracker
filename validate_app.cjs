@@ -249,6 +249,32 @@ for (const file of reportDirs) {
 }
 
 // ---------------------------------------------------------------------------
+// 5b. Notification folder completeness
+// ---------------------------------------------------------------------------
+// Standard Notifications shipped as module files must carry a paired Python
+// module ({name}.py) and message template ({name}.md) next to the JSON.
+// Notification.send() -> load_standard_properties() imports the module via
+// get_doc_module() and replaces `message` with the template file; a missing
+// file raises ModuleNotFoundError at send time, which aborts the triggering
+// document save/submit (and demo seeding during migrate).
+const notificationFiles = walk(path.join(APP, "vending_tracker", "notification")).filter((f) => f.endsWith(".json"));
+for (const file of notificationFiles) {
+  const dir = path.dirname(file);
+  const name = path.basename(file, ".json");
+  const doc = parsed[rel(file)];
+  if (doc && doc.doctype === "Notification") {
+    check(
+      fs.existsSync(path.join(dir, name + ".py")),
+      `${rel(dir)}: missing ${name}.py (required by get_doc_module at send time)`
+    );
+    check(
+      fs.existsSync(path.join(dir, name + ".md")),
+      `${rel(dir)}: missing ${name}.md message template`
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // 6. Workspace content references
 // ---------------------------------------------------------------------------
 const workspaceFiles = walk(path.join(APP, "vending_tracker", "workspace")).filter((f) => f.endsWith(".json"));
