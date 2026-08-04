@@ -1,6 +1,14 @@
 import frappe
 from frappe.utils import flt, format_datetime, nowdate
 
+# docstatus -> (label, diagram color); pill classes map green/red to on/off.
+DOC_STATUS = {
+	0: ("Draft", "gray"),
+	1: ("Submitted", "green"),
+	2: ("Cancelled", "red"),
+}
+PILL_CLASS = {"green": "on", "red": "off", "gray": "gray"}
+
 
 def get_context(context):
 	"""Site health / status page for monitoring endpoints.
@@ -40,6 +48,9 @@ def get_context(context):
 		"pending_restocks": "/app/stock-entry",
 	}
 	context.desk_workspace_url = "/app/vending-tracker"
+
+	# Workflow guide snapshots for the portal modal (mirrors the desk dialog).
+	context.workflows = [w for w in (_workflow("Vending Sales Entry"), _workflow("Stock Entry")) if w]
 	return context
 
 
@@ -134,6 +145,56 @@ def _scheduler_disabled():
 		from frappe.utils.scheduler import is_scheduler_disabled
 
 		return is_scheduler_disabled()
+	except Exception:
+		return None
+
+
+def _workflow(doctype):
+	"""Snapshot of an active workflow for the portal's Workflow guide modal.
+
+	Mirrors the desk dialog (vending_tracker/public/js/vending_tracker.js
+	-> show_workflow_dialog); both render the live workflow config, so the two
+	views stay consistent by construction.
+	"""
+	try:
+		if not frappe.db.table_exists("Workflow"):
+			return None
+		name = frappe.db.get_value(
+			"Workflow", {"document_type": doctype, "is_active": 1}, "name", cache=True
+		)
+		if not name:
+			return None
+		doc = frappe.get_cached_doc("Workflow", name)
+		states = []
+		for s in sorted(doc.states, key=lambda x: int(x.doc_status or 0)):
+			status = int(s.doc_status or 0)
+			label, color = DOC_STATUS.get(status, (f"DocStatus {status}", "gray"))
+			states.append(
+				{
+					"state": s.state,
+					"doc_status": status,
+					"status_label": label,
+					"status_class": color,
+					"pill_class": PILL_CLASS.get(color, "gray"),
+					"allow_edit": s.allow_edit or "—",
+					"update": f"{s.update_field} = {s.update_value}" if s.update_field else "—",
+				}
+			)
+		transitions = [
+			{
+				"state": t.state,
+				"action": t.action,
+				"next_state": t.next_state,
+				"roles": t.allowed or "—",
+			}
+			for t in doc.transitions
+		]
+		return {
+			"workflow_name": doc.workflow_name or name,
+			"document_type": doctype,
+			"states": states,
+			"transitions": transitions,
+		}
 	except Exception:
 		return None
 

@@ -31,6 +31,9 @@ vending_tracker.add_workflow_button = function (page, doctype) {
 	page.__vt_workflow_button = true;
 };
 
+// Mirrored on the public /health portal page (vending_tracker/www/health.py
+// -> _workflow renders the same guide server-side); both read the live
+// workflow config so they stay consistent.
 vending_tracker.show_workflow_dialog = function (doctype) {
 	// Ensure the workflow is loaded client-side (the list view itself also
 	// loads it via set_stats -> frappe.workflow.get_state_fieldname).

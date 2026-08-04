@@ -40,6 +40,29 @@
 		tr[data-href]:hover td { background: #f6f8fa; }
 		.head-link { margin-left: auto; align-self: center; text-decoration: none; font-size: 13px; font-weight: 600; color: #0366d6; white-space: nowrap; }
 		.head-link:hover { text-decoration: underline; }
+		.head-btn { margin-left: 12px; align-self: center; border: 1px solid #d0d7de; background: #f6f8fa; color: #1f272e; border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+		.head-btn:hover { background: #eef1f4; }
+		.vt-modal { position: fixed; inset: 0; background: rgba(31, 39, 46, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 24px; }
+		.vt-modal[hidden] { display: none; }
+		.vt-modal-card { background: #fff; border-radius: 12px; max-width: 860px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 12px 40px rgba(31, 39, 46, 0.25); }
+		.vt-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+		.vt-modal-head h2 { font-size: 16px; margin: 0; }
+		.vt-modal-close { border: none; background: none; font-size: 20px; line-height: 1; cursor: pointer; color: var(--gray); padding: 4px 8px; }
+		.vt-modal-body { padding: 20px; overflow-y: auto; font-size: 12px; }
+		.vt-wf-block { margin-bottom: 22px; }
+		.vt-wf-title { font-size: 14px; margin: 0 0 10px; }
+		.vt-wf-flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px; margin-bottom: 10px; }
+		.vt-wf-card { flex: 1 1 140px; min-width: 130px; border: 1px solid var(--border); border-top-width: 3px; border-radius: 8px; padding: 10px 12px; text-align: center; background: #fbfcfd; }
+		.vt-wf-card .vt-wf-state { font-size: 13px; font-weight: 600; }
+		.vt-wf-card .vt-wf-sub { margin-top: 2px; font-size: 11px; color: var(--gray); }
+		.vt-wf-card .vt-wf-roles { margin-top: 4px; font-size: 10px; color: var(--gray); }
+		.vt-wf-card.vt-wf-gray { border-top-color: #6c757d; }
+		.vt-wf-card.vt-wf-green { border-top-color: #28a745; }
+		.vt-wf-card.vt-wf-red { border-top-color: #dc3545; }
+		.vt-wf-arrow { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 48px; padding: 0 2px; }
+		.vt-wf-arrow-glyph { font-size: 20px; line-height: 1; color: var(--gray); }
+		.vt-wf-arrow-action { margin-top: 2px; font-size: 10px; text-align: center; color: var(--gray); }
+		.vt-wf-table { margin-bottom: 6px; }
 		.pill { display: inline-block; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
 		.pill.on { background: var(--green-bg); color: var(--green); }
 		.pill.off { background: var(--red-bg); color: var(--red); }
@@ -59,6 +82,7 @@
 					<p class="meta">Vending Tracker v{{ tracker_version or "—" }} · Apps: {{ installed_apps | e }}</p>
 				</div>
 				<a class="head-link" href="{{ desk_workspace_url }}">Open Vending Tracker in Desk →</a>
+				<button class="head-btn" type="button" onclick="vtShowWorkflow()">Workflow Guide</button>
 			</div>
 
 			{% if scheduler_disabled %}
@@ -128,7 +152,80 @@
 		</div>
 		<div class="foot">Generated {{ generated }} · vending_tracker health endpoint</div>
 	</div>
+
+	<div id="vt-wf-modal" class="vt-modal" role="dialog" aria-modal="true" aria-label="Workflow Guide" hidden>
+		<div class="vt-modal-card">
+			<div class="vt-modal-head">
+				<h2>Workflow Guide</h2>
+				<button class="vt-modal-close" type="button" onclick="vtCloseWorkflow()" aria-label="Close">&times;</button>
+			</div>
+			<div class="vt-modal-body">
+				{% if workflows %}
+				{% for wf in workflows %}
+				<div class="vt-wf-block">
+					<h3 class="vt-wf-title">{{ wf.workflow_name | e }} <span class="meta" style="display:inline">({{ wf.document_type | e }})</span></h3>
+					<div class="vt-wf-flow">
+						{% for s in wf.states %}
+						<div class="vt-wf-card vt-wf-{{ s.status_class }}">
+							<div class="vt-wf-state">{{ s.state | e }}</div>
+							<div class="vt-wf-sub">{{ s.status_label | e }}</div>
+							<div class="vt-wf-roles">{{ s.allow_edit | e }}</div>
+						</div>
+						{% if not loop.last %}
+						{% set nxt = wf.states[loop.index] %}
+						{% set acts = wf.transitions | selectattr("state", "equalto", s.state) | selectattr("next_state", "equalto", nxt.state) | map(attribute="action") | unique | list %}
+						<div class="vt-wf-arrow">
+							<span class="vt-wf-arrow-glyph">&rarr;</span>
+							{% if acts %}<span class="vt-wf-arrow-action">{{ acts | join(" / ") | e }}</span>{% endif %}
+						</div>
+						{% endif %}
+						{% endfor %}
+					</div>
+					<table class="vt-wf-table">
+						<thead><tr><th>State</th><th>DocStatus</th><th>Editable By</th><th>On Entry Updates</th></tr></thead>
+						<tbody>
+							{% for s in wf.states %}
+							<tr>
+								<td><span class="pill {{ s.pill_class }}">{{ s.state | e }}</span></td>
+								<td>{{ s.status_label | e }}</td>
+								<td>{{ s.allow_edit | e }}</td>
+								<td>{{ s.update | e }}</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+					<table class="vt-wf-table">
+						<thead><tr><th>From</th><th>Action</th><th>To</th><th>Allowed Roles</th></tr></thead>
+						<tbody>
+							{% for t in wf.transitions %}
+							<tr>
+								<td>{{ t.state | e }}</td>
+								<td><span class="pill gray">{{ t.action | e }}</span></td>
+								<td>{{ t.next_state | e }}</td>
+								<td>{{ t.roles | e }}</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+				{% endfor %}
+				{% else %}
+				<p class="meta">No active workflows found.</p>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+
 	<script>
+		var vtModal = document.getElementById("vt-wf-modal");
+		function vtShowWorkflow() { vtModal.hidden = false; }
+		function vtCloseWorkflow() { vtModal.hidden = true; }
+		vtModal.addEventListener("click", function (e) {
+			if (e.target === vtModal) vtCloseWorkflow();
+		});
+		document.addEventListener("keydown", function (e) {
+			if (e.key === "Escape" && !vtModal.hidden) vtCloseWorkflow();
+		});
 		// Whole-row click opens the machine form in Desk (the ID cell also links there).
 		document.querySelectorAll("tr[data-href]").forEach(function (tr) {
 			tr.addEventListener("click", function (e) {
