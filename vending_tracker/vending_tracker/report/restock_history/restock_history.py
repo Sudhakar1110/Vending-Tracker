@@ -13,7 +13,7 @@ SELECT
 FROM `tabStock Entry` se
 WHERE se.custom_is_vending_transaction = 1
 	AND se.stock_entry_type IN ('Material Receipt', 'Material Transfer')
-	AND se.posting_date BETWEEN %(from_date)s AND %(to_date)s
+	AND se.posting_date BETWEEN COALESCE(%(from_date)s, '1970-01-01') AND COALESCE(%(to_date)s, CURDATE())
 	AND (COALESCE(%(machine)s, '') = '' OR se.custom_vending_machine = %(machine)s)
 ORDER BY se.posting_date DESC, se.name DESC
 """
