@@ -4,7 +4,9 @@ from frappe import _
 from vending_tracker.api.auth import authenticate_machine
 from vending_tracker.utils.vending_utils import (
 	generate_iot_token,
-	get_machine_warehouse,
+	# Aliased so the whitelisted API endpoint below (same name) does not shadow
+	# this helper — otherwise the endpoint would recurse into itself.
+	get_machine_warehouse as get_machine_linked_warehouse,
 	log_machine_health,
 )
 
@@ -172,7 +174,7 @@ def regenerate_token(machine):
 @frappe.whitelist()
 def get_machine_warehouse(machine):
 	"""Return the linked warehouse of a machine (used by client scripts)."""
-	return get_machine_warehouse(machine)
+	return get_machine_linked_warehouse(machine)
 
 
 @frappe.whitelist()
