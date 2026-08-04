@@ -1,0 +1,21 @@
+{
+ "channel": "Email",
+ "condition": "doc.custom_is_vending_transaction == 1 and doc.stock_entry_type in ('Material Receipt', 'Material Transfer')",
+ "docstatus": 0,
+ "doctype": "Notification",
+ "document_type": "Stock Entry",
+ "enabled": 1,
+ "event": "Submit",
+ "is_standard": 1,
+ "message": "**Restock Completed**\n\nStock Entry **{{ doc.name }}** has been submitted.\n\n- Machine: {{ doc.custom_vending_machine }}\n- Type: {{ doc.stock_entry_type }}\n- From: {{ doc.from_warehouse or '—' }}\n- To: {{ doc.to_warehouse or '—' }}",
+ "message_type": "Markdown",
+ "module": "Vending Tracker",
+ "name": "Restock Completed",
+ "recipients": [
+  {
+   "receiver_by_role": "Vending Manager"
+  }
+ ],
+ "send_system_notification": 1,
+ "subject": "Restock Completed: {{ doc.custom_vending_machine }} ({{ doc.name }})"
+}

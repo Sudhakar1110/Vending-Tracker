@@ -1,0 +1,22 @@
+{
+ "channel": "Email",
+ "condition": "doc.is_online == 0",
+ "docstatus": 0,
+ "doctype": "Notification",
+ "document_type": "Vending Machine",
+ "enabled": 1,
+ "event": "Value Change",
+ "is_standard": 1,
+ "message": "**Machine Offline**\n\nMachine **{{ doc.machine_name }}** ({{ doc.machine_id }}) has gone offline.\n\n- Status: {{ doc.status }}\n- Last heartbeat: {{ doc.last_heartbeat }}",
+ "message_type": "Markdown",
+ "module": "Vending Tracker",
+ "name": "Machine Offline",
+ "recipients": [
+  {
+   "receiver_by_role": "Vending Manager"
+  }
+ ],
+ "send_system_notification": 1,
+ "subject": "Machine Offline: {{ doc.machine_name }} ({{ doc.machine_id }})",
+ "value_changed": "is_online"
+}

@@ -1,0 +1,22 @@
+{
+ "channel": "Email",
+ "condition": "doc.last_api_status == 'Failed'",
+ "docstatus": 0,
+ "doctype": "Notification",
+ "document_type": "Vending Machine",
+ "enabled": 1,
+ "event": "Value Change",
+ "is_standard": 1,
+ "message": "**API Failure**\n\nThe IoT API endpoint for machine **{{ doc.machine_name }}** ({{ doc.machine_id }}) could not be reached.\n\n- Endpoint: {{ doc.api_endpoint }}",
+ "message_type": "Markdown",
+ "module": "Vending Tracker",
+ "name": "API Failure",
+ "recipients": [
+  {
+   "receiver_by_role": "Vending Administrator"
+  }
+ ],
+ "send_system_notification": 1,
+ "subject": "API Failure: {{ doc.machine_name }} ({{ doc.machine_id }})",
+ "value_changed": "last_api_status"
+}

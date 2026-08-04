@@ -1,0 +1,21 @@
+{
+ "channel": "Email",
+ "condition": "doc.next_maintenance_date and frappe.utils.date_diff(doc.next_maintenance_date, frappe.utils.today()) <= 7 and frappe.utils.date_diff(doc.next_maintenance_date, frappe.utils.today()) >= 0",
+ "docstatus": 0,
+ "doctype": "Notification",
+ "document_type": "Vending Machine",
+ "enabled": 1,
+ "event": "Save",
+ "is_standard": 1,
+ "message": "**Maintenance Due**\n\nMachine **{{ doc.machine_name }}** ({{ doc.machine_id }}) is due for maintenance on **{{ doc.next_maintenance_date }}**.\n\n- Location: {{ doc.location }}",
+ "message_type": "Markdown",
+ "module": "Vending Tracker",
+ "name": "Maintenance Due",
+ "recipients": [
+  {
+   "receiver_by_role": "Vending Manager"
+  }
+ ],
+ "send_system_notification": 1,
+ "subject": "Maintenance Due: {{ doc.machine_name }} ({{ doc.machine_id }})"
+}

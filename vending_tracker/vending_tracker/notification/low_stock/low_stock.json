@@ -1,0 +1,21 @@
+{
+ "channel": "Email",
+ "condition": "doc.reorder_threshold and doc.current_stock <= doc.reorder_threshold",
+ "docstatus": 0,
+ "doctype": "Notification",
+ "document_type": "Machine Product Slot",
+ "enabled": 1,
+ "event": "Save",
+ "is_standard": 1,
+ "message": "**Low Stock Alert**\n\nSlot **{{ doc.name }}** in machine **{{ doc.machine }}** is running low.\n\n- Item: {{ doc.item }}\n- Current stock: {{ doc.current_stock }}\n- Reorder threshold: {{ doc.reorder_threshold }}",
+ "message_type": "Markdown",
+ "module": "Vending Tracker",
+ "name": "Low Stock",
+ "recipients": [
+  {
+   "receiver_by_role": "Vending Manager"
+  }
+ ],
+ "send_system_notification": 1,
+ "subject": "Low Stock Alert: {{ doc.item }} in {{ doc.machine }}"
+}

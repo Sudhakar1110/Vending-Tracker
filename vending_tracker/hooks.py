@@ -24,21 +24,22 @@ app_include_css = "/assets/vending_tracker/css/vending_tracker.css"
 # Files are expected in the `fixtures/` directory:
 #   fixtures/custom_field.json, fixtures/property_setter.json,
 #   fixtures/client_script.json, fixtures/server_script.json,
-#   fixtures/role.json, fixtures/notification.json, fixtures/workflow.json,
+#   fixtures/role.json, fixtures/workflow.json,
 #   fixtures/print_format.json
 #
-# Reports, Workspaces, Dashboard Charts and Number Cards are delivered as
-# version-controlled module files (report/, workspace/, dashboard_chart/,
-# number_card/ folders) and are auto-synced during migrate — the standard
-# ERPNext v15 approach. They are intentionally NOT listed here: fixture
-# imports run full doctype validation, which rejects standard charts.
+# Reports, Workspaces, Dashboard Charts, Number Cards and Notifications are
+# delivered as version-controlled module files (report/, workspace/,
+# dashboard_chart/, number_card/, notification/ folders) and are auto-synced
+# during migrate — the standard ERPNext v15 approach. They are intentionally
+# NOT listed here: module imports skip doctype validation (import_doc sets
+# ignore_validate), while fixture imports run full doctype validation, which
+# rejects standard Notifications and standard charts.
 fixtures = [
     "Custom Field",
     "Property Setter",
     "Client Script",
     "Server Script",
     "Role",
-    "Notification",
     "Workflow",
     "Print Format",
 ]
