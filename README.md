@@ -43,6 +43,98 @@ ERPNext v15+ must be installed on the site first (`required_apps = ["erpnext"]`)
 - **Scheduler jobs** for low stock detection, dashboard refresh, IoT
   synchronisation, daily reports, revenue summary and machine health checks.
 
+## Workflow: Start to End
+
+### Document workflows
+
+Two Frappe workflows ship with the app, both mirroring the native docstatus
+flow **Draft → Submitted → Cancelled**:
+
+**Vending Sales Entry Workflow** — applied to `Vending Sales Entry`
+
+| State | DocStatus | Edit allowed by |
+| --- | --- | --- |
+| Draft | 0 | Vending Staff |
+| Submitted | 1 | Vending Manager |
+| Cancelled | 2 | Vending Manager |
+
+| Transition | Action | From → To | Allowed roles |
+| --- | --- | --- | --- |
+| Submit | Submit | Draft → Submitted | Vending Staff, Vending Manager, Vending Administrator, System Manager |
+| Cancel | Cancel | Submitted → Cancelled | Vending Manager, Vending Administrator, System Manager |
+
+**Vending Restock Workflow** — applied to `Stock Entry`
+
+| State | DocStatus | Edit allowed by |
+| --- | --- | --- |
+| Draft | 0 | Stock User |
+| Submitted | 1 | Stock Manager |
+| Cancelled | 2 | Stock Manager |
+
+| Transition | Action | From → To | Allowed roles |
+| --- | --- | --- | --- |
+| Submit | Submit | Draft → Submitted | Vending Manager, Vending Administrator, Stock User, Stock Manager, System Manager |
+| Cancel | Cancel | Submitted → Cancelled | Vending Manager, Vending Administrator, Stock Manager, System Manager |
+
+> Because the Restock Workflow applies to the whole `Stock Entry` doctype,
+> every Stock Entry on the instance carries a `workflow_state` field and
+> workflow action bar. States are set automatically on submit/cancel, and the
+> standard ERPNext stock roles are included in the transitions, so regular
+> ERPNext users are never locked out (see Notes below for how to opt out).
+
+### Operational flow (start to end)
+
+```mermaid
+flowchart TD
+    A[Install app + run bench migrate] --> B[Set default company + assign roles<br/>Vending Staff / Manager / Administrator]
+    B --> C[Create Vending Machine<br/>links a dedicated ERPNext warehouse]
+    C --> D[Configure Machine Product Slots<br/>item, capacity, reorder threshold]
+    D --> E[Restock: submit Stock Entry<br/>Material Receipt / Material Transfer into machine warehouse]
+    E --> F[Stock Ledger updates<br/>slot current_stock auto-synced]
+    F --> G[Record sale: submit Vending Sales Entry]
+    G --> H[auto Material Issue consumes machine stock]
+    H --> I[Alerts: Low Stock / High Sales / Restock Completed]
+    H --> J[Reports, dashboard charts & scheduler jobs]
+    H --> K[Cancel entry → Material Issue cancelled → stock restored]
+```
+
+1. **Install & setup** — install the app (`bench --site [site] install-app
+   vending_tracker`) and run `bench migrate`. Assign the **Vending Staff**,
+   **Vending Manager** and **Vending Administrator** roles to users. Sample
+   data seeds automatically once a default company is set.
+2. **Create the machine** — a `Vending Machine` record (id, name, type,
+   location, IoT token). With *Auto Create Machine Warehouses* enabled (the
+   default) its dedicated warehouse (`VM - <machine_id>`) is created
+   automatically; all of that machine's stock lives there.
+3. **Configure slots** — one `Machine Product Slot` per product position:
+   link the machine and a **Vending Products** item, then set the slot number,
+   maximum capacity and reorder threshold. Capacity and threshold are fetched
+   from the item's custom fields (`Slot Capacity`, `Default Reorder
+   Threshold`) when left blank.
+4. **Restock (Draft → Submitted)** — create a `Stock Entry` and submit it:
+   `Material Receipt` to fill the machine warehouse, or `Material Transfer` to
+   move stock in from a central warehouse. The Stock Ledger moves the stock
+   and the slot's `current_stock` / `stock_status` are recomputed
+   automatically; the **Restock Completed** notification fires.
+5. **Sell (Draft → Submitted)** — submit a `Vending Sales Entry` (machine,
+   item, quantity). The rate is taken from the item's Standard Selling price
+   list, the amount is computed, and a native `Material Issue` Stock Entry is
+   created and submitted automatically to consume the stock from the machine
+   warehouse — the Stock Ledger stays the single source of truth.
+6. **Alerts** — after a sale, slots at or below their reorder threshold raise
+   a **Low Stock** alert (once per cycle), and sales at or above the **High
+   Sales Threshold** (Vending Tracker Settings) notify Vending Managers.
+   Machine value changes (offline, disabled, API / IoT sync failures) raise
+   their own alerts.
+7. **Cancel (Submitted → Cancelled)** — cancelling a sales entry cancels the
+   generated `Material Issue`, restoring the stock; Stock Entries cancel the
+   same way.
+8. **Report & monitor** — the **Vending Tracker** workspace, 10 reports,
+   6 number cards and 5 dashboard charts surface revenue, machine
+   utilisation, low stock and item performance. Scheduler jobs run machine
+   health checks and IoT synchronisation hourly, and low-stock detection,
+   revenue summaries and daily report emails daily.
+
 ## Fixtures & module files
 
 Version-controlled configuration is delivered two ways, both auto-installed on
