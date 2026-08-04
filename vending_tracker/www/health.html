@@ -22,9 +22,16 @@
 		.stat.warn .num { color: var(--warn); }
 		.alert { background: var(--warn-bg); border: 1px solid #ffeeba; color: var(--warn); border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; }
 		.section-title { font-size: 14px; font-weight: 600; margin: 0 0 8px; }
+		.table-wrap { overflow-x: auto; }
 		table { width: 100%; border-collapse: collapse; font-size: 13px; }
-		th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--gray); border-bottom: 1px solid var(--border); padding: 8px 10px; }
-		td { padding: 8px 10px; border-bottom: 1px solid #eef1f4; }
+		th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--gray); border-bottom: 1px solid var(--border); padding: 8px 10px; white-space: nowrap; }
+		td { padding: 8px 10px; border-bottom: 1px solid #eef1f4; white-space: nowrap; }
+		.batt { display: inline-block; width: 44px; height: 6px; border-radius: 3px; background: #e9ecef; overflow: hidden; vertical-align: middle; }
+		.batt-bar { display: block; height: 100%; }
+		.batt-bar.batt-on { background: #28a745; }
+		.batt-bar.batt-warn { background: #ffc107; }
+		.batt-bar.batt-off { background: #dc3545; }
+		.batt-label { margin-left: 6px; font-size: 12px; color: #495057; }
 		.pill { display: inline-block; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
 		.pill.on { background: var(--green-bg); color: var(--green); }
 		.pill.off { background: var(--red-bg); color: var(--red); }
@@ -62,6 +69,7 @@
 
 			<h2 class="section-title">Machines</h2>
 			{% if machines %}
+			<div class="table-wrap">
 			<table>
 				<thead>
 					<tr>
@@ -70,6 +78,9 @@
 						<th>Type</th>
 						<th>Status</th>
 						<th>IoT</th>
+						<th>Battery</th>
+						<th>Temp</th>
+						<th>Last API</th>
 						<th>Location</th>
 						<th>Warehouse</th>
 						<th>Last heartbeat</th>
@@ -83,6 +94,16 @@
 						<td>{{ (m.machine_type or "—") | e }}</td>
 						<td><span class="pill {{ m.status_class }}">{{ (m.status or "—") | e }}</span></td>
 						<td><span class="pill {{ m.iot_class }}">{{ m.iot_label }}</span></td>
+						<td>
+							{% if m.battery_pct is not none %}
+							<span class="batt"><span class="batt-bar batt-{{ m.battery_class }}" style="width: {{ m.battery_pct }}%"></span></span>
+							<span class="batt-label">{{ m.battery_label | e }}</span>
+							{% else %}
+							—
+							{% endif %}
+						</td>
+						<td>{{ m.temperature_label | e }}</td>
+						<td><span class="pill {{ m.api_status_class }}">{{ m.api_status_label | e }}</span></td>
 						<td>{{ (m.location or "—") | e }}</td>
 						<td>{{ (m.linked_warehouse or "—") | e }}</td>
 						<td>{{ m.last_heartbeat_label | e }}</td>
@@ -90,6 +111,7 @@
 					{% endfor %}
 				</tbody>
 			</table>
+			</div>
 			{% else %}
 			<p class="meta">No machines registered yet.</p>
 			{% endif %}

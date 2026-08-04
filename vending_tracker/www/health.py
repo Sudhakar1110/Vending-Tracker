@@ -139,6 +139,9 @@ def _machines():
 				"status",
 				"is_online",
 				"iot_enabled",
+				"battery_level",
+				"temperature",
+				"last_api_status",
 				"location",
 				"linked_warehouse",
 				"last_heartbeat",
@@ -166,6 +169,24 @@ def _machines():
 			else:
 				row["iot_label"] = "Disabled"
 				row["iot_class"] = "gray"
+			# Battery (Percent) — color-coded for monitoring at a glance:
+			# green >= 50%, amber 20–49%, red < 20%.
+			if row.get("battery_level") is not None:
+				battery = flt(row.get("battery_level"))
+				row["battery_pct"] = battery
+				row["battery_label"] = f"{battery:.0f}%"
+				row["battery_class"] = "on" if battery >= 50 else ("warn" if battery >= 20 else "off")
+			else:
+				row["battery_pct"] = None
+				row["battery_label"] = "—"
+				row["battery_class"] = "gray"
+			temperature = row.get("temperature")
+			row["temperature_label"] = (
+				f"{flt(temperature):.1f} °C" if temperature is not None else "—"
+			)
+			api_status = row.get("last_api_status")
+			row["api_status_label"] = api_status or "—"
+			row["api_status_class"] = {"Success": "on", "Failed": "off"}.get(api_status, "gray")
 		return rows
 	except Exception:
 		return []
