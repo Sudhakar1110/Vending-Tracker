@@ -54,7 +54,9 @@ def get_context(context):
 	context.tracker_version = _app_version("vending_tracker")
 	context.installed_apps = ", ".join(frappe.get_installed_apps())
 
-	context.machines = _machines()
+	slot_map = _slot_summary()
+	context.slot_summary = slot_map
+	context.machines = _machines(slot_map=slot_map)
 	context.machine_count = len(context.machines)
 	# Operational status, not IoT heartbeat: a machine without IoT integration
 	# (iot_enabled = 0) is perfectly functional and should not read as offline.
@@ -66,6 +68,12 @@ def get_context(context):
 	context.total_revenue_label = _money(_revenue())
 	context.pending_restocks = _pending_restocks()
 	context.scheduler_disabled = _scheduler_disabled()
+
+	# Detailed portal panels (all guarded; empty when there is no data yet).
+	context.alerts = _alerts()
+	context.restock_queue = _restock_queue(slot_map=slot_map)
+	context.top_items = _top_items()
+	context.machine_revenue = _revenue_by_machine()
 	context.generated = format_datetime(frappe.utils.now_datetime())
 
 	# Desk routes the portal cards / rows link to (Vending Machine is autonamed
@@ -290,7 +298,168 @@ def _workflow(doctype):
 		return None
 
 
-def _machines():
+def _slot_summary():
+	"""Per-machine slot counts: total (active), in stock, and low stock."""
+	try:
+		if not frappe.db.table_exists("Machine Product Slot"):
+			return {}
+		rows = frappe.db.sql(
+			"""select machine,
+				count(*) as total,
+				sum(case when is_active = 1 then 1 else 0 end) as active,
+				sum(case when is_active = 1 and ifnull(reorder_threshold, 0) > 0
+					and current_stock is not null
+					and current_stock <= reorder_threshold then 1 else 0 end) as low
+			from `tabMachine Product Slot`
+			group by machine""",
+			as_dict=True,
+		)
+		out = {}
+		for r in rows:
+			active = int(r.active or 0)
+			low = int(r.low or 0)
+			out[r.machine] = {
+				"total": int(r.total or 0),
+				"active": active,
+				"in_stock": max(active - low, 0),
+				"low": low,
+			}
+		return out
+	except Exception:
+		return {}
+
+
+def _alerts(limit=8):
+	"""Most recent notification log entries for the portal alert feed."""
+	try:
+		if not frappe.db.table_exists("Notification Log"):
+			return []
+		rows = frappe.db.get_all(
+			"Notification Log",
+			fields=["name", "subject", "message", "type", "creation", "document_type", "document_name"],
+			order_by="creation desc",
+			limit=limit,
+		)
+		out = []
+		for r in rows:
+			subject = (r.subject or "").strip()
+			message = (r.message or "").strip() or subject
+			if len(message) > 140:
+				message = message[:140].rsplit(" ", 1)[0] + "…"
+			log_type = (r.type or "Alert").strip()
+			out.append(
+				{
+					"subject": subject,
+					"message": message,
+					"type": log_type,
+					"pill_class": "off" if log_type == "Alert" else "gray",
+					"creation_label": format_datetime(r.creation) if r.creation else "—",
+					"document": f"{r.document_type} {r.document_name}".strip(),
+				}
+			)
+		return out
+	except Exception:
+		return []
+
+
+def _restock_queue(slot_map=None, limit=6):
+	"""Pending (draft) restock Stock Entries with the machine's low-slot count."""
+	try:
+		if not frappe.db.table_exists("Stock Entry"):
+			return []
+		if not frappe.db.field_exists("Stock Entry", "custom_vending_machine"):
+			return []
+		rows = frappe.db.get_all(
+			"Stock Entry",
+			filters={"docstatus": 0, "custom_vending_machine": ["!=", ""]},
+			fields=["name", "posting_date", "custom_vending_machine"],
+			order_by="creation desc",
+			limit=limit,
+		)
+		slot_map = slot_map if slot_map is not None else _slot_summary()
+		out = []
+		for r in rows:
+			machine = r.custom_vending_machine
+			out.append(
+				{
+					"stock_entry": r.name,
+					"machine": machine,
+					"posting_date_label": str(r.posting_date) if r.posting_date else "—",
+					"low_slots": (slot_map.get(machine) or {}).get("low", 0),
+				}
+			)
+		return out
+	except Exception:
+		return []
+
+
+def _top_items(limit=5):
+	"""Best-selling items over the last 30 days (revenue ranked)."""
+	try:
+		if not frappe.db.table_exists("Vending Sales Entry"):
+			return []
+		rows = frappe.db.sql(
+			"""select se.item, sum(se.quantity_sold) as qty, sum(se.amount) as revenue
+			from `tabVending Sales Entry` se
+			where se.docstatus = 1 and se.posting_date >= %s
+			group by se.item order by revenue desc limit %s""",
+			(add_days(nowdate(), -29), int(limit)),
+			as_dict=True,
+		)
+		peak = max((flt(r.revenue) for r in rows), default=0.0)
+		# Single batched lookup for display names (avoids N+1 queries).
+		names = {}
+		items = [r.item for r in rows if r.item]
+		if items:
+			names = {
+				i.name: i.item_name
+				for i in frappe.db.get_all("Item", filters={"name": ["in", items]}, fields=["name", "item_name"])
+			}
+		out = []
+		for r in rows:
+			out.append(
+				{
+					"item": r.item,
+					"item_name": names.get(r.item) or r.item or "—",
+					"qty": flt(r.qty),
+					"revenue_label": _money(r.revenue),
+					"pct": int(round(flt(r.revenue) / peak * 100)) if peak else 0,
+				}
+			)
+		return out
+	except Exception:
+		return []
+
+
+def _revenue_by_machine(limit=5):
+	"""Top machines by revenue over the last 30 days."""
+	try:
+		if not frappe.db.table_exists("Vending Sales Entry"):
+			return []
+		rows = frappe.db.sql(
+			"""select se.machine, sum(se.amount) as revenue
+			from `tabVending Sales Entry` se
+			where se.docstatus = 1 and se.posting_date >= %s
+			group by se.machine order by revenue desc limit %s""",
+			(add_days(nowdate(), -29), int(limit)),
+			as_dict=True,
+		)
+		peak = max((flt(r.revenue) for r in rows), default=0.0)
+		out = []
+		for r in rows:
+			out.append(
+				{
+					"machine": r.machine,
+					"revenue_label": _money(r.revenue),
+					"pct": int(round(flt(r.revenue) / peak * 100)) if peak else 0,
+				}
+			)
+		return out
+	except Exception:
+		return []
+
+
+def _machines(slot_map=None):
 	try:
 		if not frappe.db.table_exists("Vending Machine"):
 			return []
@@ -358,6 +527,28 @@ def _machines():
 			api_status = row.get("last_api_status")
 			row["api_status_label"] = api_status or "—"
 			row["api_status_class"] = {"Success": "on", "Failed": "off"}.get(api_status, "gray")
+			# Slot inventory summary for this machine (total / in stock / low).
+			slots = (slot_map or {}).get(row.get("name")) or {}
+			row["slot_total"] = slots.get("active", 0)
+			row["slot_in_stock"] = slots.get("in_stock", 0)
+			row["slot_low"] = slots.get("low", 0)
+			# Heartbeat staleness: show "5 min ago" / "2 days ago", and flag a
+			# machine as stale when it last reported more than a day ago.
+			if row.get("last_heartbeat"):
+				try:
+					# Imported locally so an odd Frappe build can never take the
+					# public page down with an ImportError at module load.
+					from frappe.utils import time_ago
+
+					row["heartbeat_ago"] = time_ago(row["last_heartbeat"])
+					stale = (frappe.utils.now_datetime() - row["last_heartbeat"]).days >= 1
+				except Exception:
+					row["heartbeat_ago"] = row.get("last_heartbeat_label")
+					stale = False
+				row["heartbeat_class"] = "warn" if stale else "on"
+			else:
+				row["heartbeat_ago"] = None
+				row["heartbeat_class"] = "off"
 		return rows
 	except Exception:
 		return []

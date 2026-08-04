@@ -102,6 +102,48 @@
 		.batt-bar.batt-on { background: #22c55e; } .batt-bar.batt-warn { background: #f59e0b; } .batt-bar.batt-off { background: #ef4444; }
 		.batt-label { margin-left: 6px; font-size: 12px; color: #475569; }
 
+		/* toolbar (search + filter) */
+		.toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+		.toolbar input[type="search"] { flex: 1 1 220px; min-width: 180px; border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; font-size: 13px; background: #fff; color: var(--ink); }
+		.toolbar select { border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; font-size: 13px; background: #fff; color: var(--ink); }
+
+		/* auto-refresh button active state */
+		.head-btn.on { background: rgba(34, 197, 94, 0.18); border-color: rgba(34, 197, 94, 0.5); color: #4ade80; }
+
+		/* ranked lists (top items / revenue by machine) */
+		.rank-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+		.rank-rank { flex: none; width: 22px; height: 22px; border-radius: 50%; background: #eef2ff; color: #4338ca; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+		.rank-main { flex: 1; min-width: 0; }
+		.rank-name { font-size: 12px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.rank-bar { height: 6px; border-radius: 3px; background: #e9ecef; overflow: hidden; }
+		.rank-fill { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #6366f1, #22d3ee); }
+		.rank-fill.fill-teal { background: linear-gradient(90deg, #10b981, #14b8a6); }
+		.rank-meta { flex: none; text-align: right; font-size: 12px; }
+		.rank-meta b { display: block; }
+		.rank-meta span { color: var(--muted); font-size: 11px; }
+
+		/* alert feed */
+		.feed { display: flex; flex-direction: column; }
+		.feed-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid #eef2f7; }
+		.feed-item:last-child { border-bottom: none; }
+		.feed-item .pill { flex: none; margin-top: 1px; }
+		.feed-body { min-width: 0; }
+		.feed-subject { font-size: 12px; font-weight: 600; }
+		.feed-msg { font-size: 12px; color: #475569; margin-top: 1px; }
+		.feed-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+		/* restock queue */
+		.queue-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; text-decoration: none; color: inherit; padding: 9px 10px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 8px; transition: border-color 0.15s ease, background 0.15s ease; }
+		.queue-item:hover { border-color: #c7d2fe; background: #f8fafc; }
+		.queue-name { font-size: 13px; font-weight: 600; }
+		.queue-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+		/* slot chips (total · in stock · low) */
+		.slot-chip { display: inline-block; min-width: 22px; text-align: center; border-radius: 6px; background: #eef2ff; color: #4338ca; font-size: 11px; font-weight: 700; padding: 2px 6px; margin-right: 3px; }
+		.slot-chip.ok { background: #ecfdf5; color: #065f46; }
+		.slot-chip.warn { background: var(--warn-bg); color: var(--warn); }
+		.slot-chip.gray { background: #e9ecef; color: #495057; }
+
 		.foot { text-align: center; color: var(--muted); font-size: 12px; padding: 18px 12px 26px; }
 
 		/* workflow modal */
@@ -142,6 +184,7 @@
 			<div class="topbar-actions">
 				<span class="status {{ 'status-warn' if degraded else '' }}">{{ "● DEGRADED" if degraded else "● OK" }}</span>
 				<button class="head-btn" type="button" onclick="vtShowWorkflow()">Workflow Guide</button>
+				<button class="head-btn" id="vt-auto-refresh" type="button" onclick="vtToggleRefresh()" title="Reload this page every 30 seconds">↻ Auto-refresh</button>
 				<a class="head-link" href="{{ desk_workspace_url }}">Open in Desk →</a>
 			</div>
 		</div>
@@ -226,17 +269,103 @@
 			</div>
 		</div>
 
+		<div class="columns">
+			<div class="panel">
+				<h2 class="section-title">Top selling items <span class="count">last 30 days</span></h2>
+				{% if top_items %}
+				{% for it in top_items %}
+				<div class="rank-row">
+					<span class="rank-rank">{{ loop.index }}</span>
+					<div class="rank-main">
+						<div class="rank-name" title="{{ it.item | e }}">{{ it.item_name | e }}</div>
+						<div class="rank-bar"><span class="rank-fill" style="width: {{ it.pct }}%"></span></div>
+					</div>
+					<div class="rank-meta"><b>{{ it.revenue_label }}</b><span>{{ it.qty }} sold</span></div>
+				</div>
+				{% endfor %}
+				{% else %}
+				<p class="meta">No sales in the last 30 days.</p>
+				{% endif %}
+			</div>
+			<div class="panel">
+				<h2 class="section-title">Revenue by machine <span class="count">last 30 days</span></h2>
+				{% if machine_revenue %}
+				{% for m in machine_revenue %}
+				<div class="rank-row">
+					<span class="rank-rank">{{ loop.index }}</span>
+					<div class="rank-main">
+						<div class="rank-name">{{ m.machine | e }}</div>
+						<div class="rank-bar"><span class="rank-fill fill-teal" style="width: {{ m.pct }}%"></span></div>
+					</div>
+					<div class="rank-meta"><b>{{ m.revenue_label }}</b></div>
+				</div>
+				{% endfor %}
+				{% else %}
+				<p class="meta">No sales in the last 30 days.</p>
+				{% endif %}
+			</div>
+		</div>
+
+		<div class="columns">
+			<div class="panel">
+				<h2 class="section-title">Recent alerts <span class="count">{{ alerts | length }} latest</span></h2>
+				{% if alerts %}
+				<div class="feed">
+					{% for a in alerts %}
+					<div class="feed-item">
+						<span class="pill {{ a.pill_class }}">{{ a.type | e }}</span>
+						<div class="feed-body">
+							<div class="feed-subject">{{ (a.subject or a.message) | e }}</div>
+							<div class="feed-msg">{{ a.message | e }}</div>
+							<div class="feed-meta">{{ a.creation_label }}{% if a.document %} · {{ a.document | e }}{% endif %}</div>
+						</div>
+					</div>
+					{% endfor %}
+				</div>
+				{% else %}
+				<p class="meta">No notifications yet.</p>
+				{% endif %}
+			</div>
+			<div class="panel">
+				<h2 class="section-title">Restock queue <span class="count">{{ restock_queue | length }} pending</span></h2>
+				{% if restock_queue %}
+				{% for q in restock_queue %}
+				<a class="queue-item" href="/app/stock-entry/{{ q.stock_entry | e }}">
+					<div>
+						<div class="queue-name">{{ q.machine | e }}</div>
+						<div class="queue-sub">Stock Entry {{ q.stock_entry | e }} · {{ q.posting_date_label }}</div>
+					</div>
+					<span class="pill {{ 'off' if q.low_slots else 'gray' }}">{{ q.low_slots }} low slot{{ 's' if q.low_slots != 1 }}</span>
+				</a>
+				{% endfor %}
+				{% else %}
+				<p class="meta">No pending restocks — the queue is clear.</p>
+				{% endif %}
+			</div>
+		</div>
+
 		<div class="panel">
 			<h2 class="section-title">Machines <span class="count">{{ machine_count }} registered</span></h2>
+			<div class="toolbar">
+				<input id="vt-search" type="search" placeholder="Search machine, name, location…" oninput="vtFilterRows()">
+				<select id="vt-status-filter" onchange="vtFilterRows()">
+					<option value="">All statuses</option>
+					<option>Active</option>
+					<option>Maintenance</option>
+					<option>Offline</option>
+					<option>Disabled</option>
+				</select>
+			</div>
 			{% if machines %}
 			<div class="table-wrap">
 			<table>
 				<thead>
 					<tr>
-						<th>ID</th>
-						<th>Name</th>
-						<th>Type</th>
-						<th>Status</th>
+					<th>ID</th>
+					<th>Name</th>
+					<th>Type</th>
+					<th title="Active slots · In stock · Low">Slots</th>
+					<th>Status</th>
 						<th>IoT</th>
 						<th>Battery</th>
 						<th>Temp</th>
@@ -248,10 +377,13 @@
 				</thead>
 				<tbody>
 					{% for m in machines %}
-					<tr data-href="{{ m.desk_url | e }}">
+					<tr data-href="{{ m.desk_url | e }}" data-status="{{ (m.status or '') | lower | e }}">
 						<td><a class="row-link" href="{{ m.desk_url | e }}"><span class="id-chip">{{ m.machine_id | e }}</span></a></td>
 						<td>{{ (m.machine_name or m.machine_id) | e }}</td>
 						<td>{{ (m.machine_type or "—") | e }}</td>
+						<td title="Active · In stock · Low">
+							<span class="slot-chip">{{ m.slot_total }}</span><span class="slot-chip ok">{{ m.slot_in_stock }}</span><span class="slot-chip {{ 'warn' if m.slot_low else 'gray' }}">{{ m.slot_low }}</span>
+						</td>
 						<td><span class="pill {{ m.status_class }}">{{ (m.status or "—") | e }}</span></td>
 						<td><span class="pill {{ m.iot_class }}">{{ m.iot_label }}</span></td>
 						<td>
@@ -266,7 +398,13 @@
 						<td><span class="pill {{ m.api_status_class }}">{{ m.api_status_label | e }}</span></td>
 						<td>{{ (m.location or "—") | e }}</td>
 						<td>{{ (m.linked_warehouse or "—") | e }}</td>
-						<td>{{ m.last_heartbeat_label | e }}</td>
+						<td>
+						{% if m.heartbeat_ago %}
+						<span class="pill {{ m.heartbeat_class }}" title="{{ m.last_heartbeat_label | e }}">{{ m.heartbeat_ago }}</span>
+						{% else %}
+						<span class="pill off">No heartbeat</span>
+						{% endif %}
+					</td>
 					</tr>
 					{% endfor %}
 				</tbody>
@@ -366,6 +504,45 @@
 				window.location.href = tr.getAttribute("data-href");
 			});
 		});
+
+		// Search + status filter on the machines table.
+		var vtSearch = document.getElementById("vt-search");
+		var vtStatus = document.getElementById("vt-status-filter");
+		function vtFilterRows() {
+			var q = (vtSearch.value || "").toLowerCase();
+			var st = (vtStatus.value || "").toLowerCase();
+			document.querySelectorAll("tr[data-href]").forEach(function (tr) {
+				var okText = !q || (tr.textContent || "").toLowerCase().indexOf(q) !== -1;
+				var okStatus = !st || tr.getAttribute("data-status") === st;
+				tr.style.display = okText && okStatus ? "" : "none";
+			});
+		}
+
+		// Auto-refresh toggle (30s), remembered across reloads. localStorage is
+		// guarded so private-browsing modes can never break the script.
+		var vtRefreshBtn = document.getElementById("vt-auto-refresh");
+		var vtRefreshTimer = null;
+		function vtRemember(value) {
+			try { localStorage.setItem("vt_autorefresh", value); } catch (e) {}
+		}
+		function vtRemembered() {
+			try { return localStorage.getItem("vt_autorefresh") === "1"; } catch (e) { return false; }
+		}
+		function vtToggleRefresh() {
+			if (vtRefreshTimer) {
+				clearInterval(vtRefreshTimer);
+				vtRefreshTimer = null;
+				vtRefreshBtn.classList.remove("on");
+				vtRemember("0");
+			} else {
+				vtRefreshTimer = setInterval(function () { window.location.reload(); }, 30000);
+				vtRefreshBtn.classList.add("on");
+				vtRemember("1");
+			}
+		}
+		if (vtRemembered()) {
+			vtToggleRefresh();
+		}
 	</script>
 </body>
 </html>
