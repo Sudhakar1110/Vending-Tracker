@@ -13,9 +13,9 @@ VENDING_ITEM_GROUP = "Vending Products"
 WORKFLOW_STATES = ["Draft", "Submitted", "Cancelled"]
 
 # Dashboard widgets shipped by this app. A malformed `filters_json` on any of
-# these (e.g. `["="]`) makes the workspace fail with "Invalid filter: =" when
-# the chart widget tries to apply it. The repair below restores the value from
-# the shipped module files.
+# these makes the workspace fail with "Invalid filter: =" when the chart widget
+# tries to apply it, and a missing/invalid config field leaves a chart stuck on
+# "No Data". The repair below restores the values from the shipped module files.
 DASHBOARD_CHART_NAMES = [
 	"Revenue Trend",
 	"Sales Trend",
@@ -30,6 +30,47 @@ NUMBER_CARD_NAMES = [
 	"Active Machines",
 	"Low Stock Products",
 	"Pending Restocks",
+]
+
+# Canonical filters for the app's document-type charts.
+#
+# IMPORTANT: rows MUST include the doctype ([doctype, fieldname, condition,
+# value]). Frappe v15's chart widget feeds chart filters straight into the
+# workspace FilterGroup, which treats the first element as the doctype and the
+# second as the fieldname. The shorthand [fieldname, condition, value] form
+# therefore lands "docstatus" in the doctype slot and "=" in the fieldname
+# slot, popping "Invalid filter: =" once per chart. With the full 4-element
+# form the filters validate cleanly on both the frontend and the server.
+DASHBOARD_CHART_FILTERS = {
+	"Revenue Trend": [["Vending Sales Entry", "docstatus", "=", 1]],
+	"Sales Trend": [["Vending Sales Entry", "docstatus", "=", 1]],
+	"Machine Performance": [["Vending Sales Entry", "docstatus", "=", 1]],
+	"Product Performance": [["Vending Sales Entry", "docstatus", "=", 1]],
+	"Stock Level Trend": [["Vending Sales Entry", "docstatus", "=", 1]],
+}
+
+# Operators accepted by Frappe's filter parser.
+VALID_FILTER_CONDITIONS = {
+	"=", "!=", "<", ">", "<=", ">=",
+	"like", "not like", "in", "not in",
+	"between", "is", "is not",
+	"timespan", "previous", "select", "exists",
+}
+
+# System fields that always exist on a doctype even when absent from its fields.
+STANDARD_FILTER_FIELDS = {
+	"name", "owner", "creation", "modified", "modified_by",
+	"docstatus", "idx", "_assign", "_comments", "_liked_by",
+	"_user_tags", "_seen", "_inbox",
+}
+
+# Chart config fields restored from the module files when blank, so a corrupted
+# DB record (e.g. an empty group_by_based_on) can never leave a chart rendering
+# "No Data".
+CHART_CONFIG_FIELDS = [
+	"document_type", "chart_type", "based_on", "value_based_on",
+	"group_by_based_on", "group_by_type", "aggregate_function_based_on",
+	"time_interval", "timespan", "number_of_groups", "type",
 ]
 
 
@@ -74,34 +115,51 @@ def create_workflow_states():
 
 
 def repair_dashboard_widgets():
-	"""Repair corrupted filters on the app's standard charts and number cards.
+	"""Repair corrupted filters / config on the app's standard charts and number cards.
 
-	A malformed ``filters_json`` (e.g. ``["="]``) on a Dashboard Chart or
-	Number Card makes the workspace fail with "Invalid filter: =" popups. The
-	stored value is restored from the shipped module files whenever it is not a
-	valid filter list, and malformed per-user chart filter overrides are dropped
-	from ``Dashboard Settings`` so the workspace renders cleanly. Idempotent and
-	safe to run on every migrate.
+	Malformed ``filters_json`` (e.g. ``["="]`` or 3-element shorthand rows on
+	charts) makes the workspace fail with "Invalid filter: =" popups, and a
+	blank config field (e.g. ``group_by_based_on``) leaves a chart stuck on
+	"No Data". Stored values are restored from the shipped module files
+	whenever they are invalid or missing, and malformed per-user chart filter
+	overrides are dropped from ``Dashboard Settings`` so the workspace renders
+	cleanly. Idempotent and safe to run on every migrate, every widget save
+	(doc_events) and every daily scheduler run.
 	"""
-	_repair_widget_filters("Dashboard Chart", DASHBOARD_CHART_NAMES, "dashboard_chart")
+	_repair_widget_filters("Dashboard Chart", DASHBOARD_CHART_NAMES, "dashboard_chart", is_chart=True)
 	_repair_widget_filters("Number Card", NUMBER_CARD_NAMES, "number_card")
 	_repair_dashboard_settings()
 
 
-def _repair_widget_filters(doctype, names, folder):
-	"""Restore ``filters_json`` / ``dynamic_filters_json`` from module files when corrupted."""
+def _repair_widget_filters(doctype, names, folder, is_chart=False):
+	"""Restore ``filters_json`` / ``dynamic_filters_json`` / config fields when corrupted."""
 	for name in names:
 		if not frappe.db.exists(doctype, name):
 			continue
-		expected = _module_widget_filters(folder, name)
-		if expected is None:
+		module_doc = _module_widget_doc(folder, name)
+		if module_doc is None:
 			continue
-		expected_filters, expected_dynamic = expected
+		expected_filters = module_doc.get("filters_json", "[]")
+		expected_dynamic = module_doc.get("dynamic_filters_json", "[]")
+		document_type = frappe.db.get_value(doctype, name, "document_type")
 
 		current_filters = frappe.db.get_value(doctype, name, "filters_json")
-		if not _is_valid_filter_list(current_filters):
-			frappe.db.set_value(doctype, name, "filters_json", expected_filters)
-			print(f"Vending Tracker: repaired {doctype} '{name}' filters_json")
+		if is_chart:
+			# Charts need the full [doctype, fieldname, condition, value] rows
+			# (see DASHBOARD_CHART_FILTERS); replace anything else.
+			if not _is_valid_filter_list(current_filters, doctype=document_type, require_doctype=True):
+				frappe.db.set_value(
+					doctype,
+					name,
+					"filters_json",
+					frappe.as_json(DASHBOARD_CHART_FILTERS.get(name, [])),
+				)
+				print(f"Vending Tracker: repaired {doctype} '{name}' filters_json")
+			_restore_missing_chart_fields(name, module_doc)
+		else:
+			if not _is_valid_filter_list(current_filters, doctype=document_type):
+				frappe.db.set_value(doctype, name, "filters_json", expected_filters)
+				print(f"Vending Tracker: repaired {doctype} '{name}' filters_json")
 
 		current_dynamic = frappe.db.get_value(doctype, name, "dynamic_filters_json")
 		if current_dynamic and not _is_valid_json(current_dynamic):
@@ -109,12 +167,32 @@ def _repair_widget_filters(doctype, names, folder):
 			print(f"Vending Tracker: repaired {doctype} '{name}' dynamic_filters_json")
 
 
+def _restore_missing_chart_fields(name, module_doc):
+	"""Fill blank chart config fields from the shipped module file."""
+	for field in CHART_CONFIG_FIELDS:
+		expected = module_doc.get(field)
+		if expected in (None, ""):
+			continue
+		current = frappe.db.get_value("Dashboard Chart", name, field)
+		if current in (None, ""):
+			frappe.db.set_value("Dashboard Chart", name, field, expected)
+			print(f"Vending Tracker: restored {field} on Dashboard Chart '{name}'")
+
+
+def repair_dashboard_settings():
+	"""doc_events entry point for ``Dashboard Settings`` saves."""
+	_repair_dashboard_settings()
+
+
 def _repair_dashboard_settings():
 	"""Drop malformed per-user chart filter overrides from Dashboard Settings.
 
-	Only this app's own charts are inspected: ``chart_config`` is shared across
-	the whole site, and Report-type charts (including ones from other apps)
-	legitimately store ``filters`` as an object rather than a filter list.
+	Per-user filters are saved by the workspace FilterGroup in the full
+	[doctype, fieldname, condition, value] form, so anything else (corrupted
+	values, 3-element shorthand, unknown fieldnames) is dropped. Only this app's
+	own charts are inspected: ``chart_config`` is shared across the whole site,
+	and Report-type charts (including ones from other apps) legitimately store
+	``filters`` as an object rather than a filter list.
 	"""
 	for name in frappe.get_all("Dashboard Settings", pluck="name"):
 		value = frappe.db.get_value("Dashboard Settings", name, "chart_config")
@@ -130,10 +208,11 @@ def _repair_dashboard_settings():
 		for chart_name, config in list(chart_config.items()):
 			if chart_name not in DASHBOARD_CHART_NAMES:
 				continue
-			if (
-				isinstance(config, dict)
-				and "filters" in config
-				and not _is_valid_filter_list(config["filters"])
+			if not isinstance(config, dict) or "filters" not in config:
+				continue
+			document_type = frappe.db.get_value("Dashboard Chart", chart_name, "document_type")
+			if not _is_valid_filter_list(
+				config["filters"], doctype=document_type, require_doctype=True
 			):
 				del config["filters"]
 				changed = True
@@ -144,8 +223,8 @@ def _repair_dashboard_settings():
 			print(f"Vending Tracker: repaired Dashboard Settings '{name}' chart_config")
 
 
-def _module_widget_filters(folder, name):
-	"""Read (filters_json, dynamic_filters_json) from the shipped module JSON."""
+def _module_widget_doc(folder, name):
+	"""Read the shipped module JSON for a dashboard widget."""
 	try:
 		from frappe.modules import get_module_path
 	except ImportError:
@@ -155,12 +234,17 @@ def _module_widget_filters(folder, name):
 	if not os.path.exists(path):
 		return None
 	with open(path) as f:
-		data = json.load(f)
-	return data.get("filters_json", "[]"), data.get("dynamic_filters_json", "[]")
+		return json.load(f)
 
 
-def _is_valid_filter_list(value):
-	"""A valid Frappe filter list is an array of [field, op, value, ...] tuples."""
+def _is_valid_filter_list(value, doctype=None, require_doctype=False):
+	"""A valid Frappe filter list for the chart widget.
+
+	``require_doctype`` demands the full [doctype, fieldname, condition, value]
+	rows the workspace FilterGroup produces (per-user chart filters and the
+	app's chart ``filters_json``); otherwise the 3-element
+	[fieldname, condition, value] shorthand used by number cards is accepted.
+	"""
 	if value is None:
 		return True
 	if isinstance(value, str):
@@ -170,12 +254,41 @@ def _is_valid_filter_list(value):
 			return False
 	if not isinstance(value, list):
 		return False
-	for item in value:
-		if not (
-			isinstance(item, (list, tuple))
-			and len(item) >= 3
-			and isinstance(item[0], str)
-		):
+	if not value:
+		return True
+	for row in value:
+		if not _is_valid_filter_row(row, doctype=doctype, require_doctype=require_doctype):
+			return False
+	return True
+
+
+def _is_valid_filter_row(row, doctype=None, require_doctype=False):
+	"""A single filter row with a real fieldname and a known condition."""
+	if not isinstance(row, (list, tuple)):
+		return False
+	if require_doctype:
+		if len(row) < 4:
+			return False
+		row_doctype, fieldname, condition = row[0], row[1], row[2]
+		if not isinstance(row_doctype, str) or not row_doctype:
+			return False
+		if doctype and row_doctype != doctype:
+			return False
+	else:
+		if len(row) < 3:
+			return False
+		fieldname, condition = row[0], row[1]
+	if not isinstance(fieldname, str) or not fieldname:
+		return False
+	if not isinstance(condition, str) or condition not in VALID_FILTER_CONDITIONS:
+		return False
+	if fieldname in STANDARD_FILTER_FIELDS:
+		return True
+	if doctype:
+		try:
+			if not frappe.get_meta(doctype).has_field(fieldname):
+				return False
+		except Exception:
 			return False
 	return True
 

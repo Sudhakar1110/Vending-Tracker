@@ -5,7 +5,7 @@
  "creation": "2026-01-01 00:00:00.000000",
  "doctype": "Dashboard Chart",
  "document_type": "Vending Sales Entry",
- "filters_json": "[[\"docstatus\",\"=\",1]]",
+ "filters_json": "[[\"Vending Sales Entry\",\"docstatus\",\"=\",1]]",
  "from_date": null,
  "group_by_based_on": "",
  "group_by_type": "Count",

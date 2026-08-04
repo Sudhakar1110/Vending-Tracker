@@ -128,9 +128,16 @@ def low_stock_detection():
 
 
 def dashboard_refresh():
-	"""Reconcile every slot's cached stock level from the Stock Ledger (Bin)."""
+	"""Reconcile every slot's cached stock level from the Stock Ledger (Bin).
+
+	Also re-runs the dashboard widget repair, so corrupted chart filters (which
+	pop "Invalid filter: =") or a blank chart config ("No Data") self-heal
+	every day even if a migrate was never run.
+	"""
+	from vending_tracker.install import repair_dashboard_widgets
 	from vending_tracker.utils.vending_utils import sync_all_slot_stock
 
+	repair_dashboard_widgets()
 	sync_all_slot_stock()
 	frappe.db.commit()
 

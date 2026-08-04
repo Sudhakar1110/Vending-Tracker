@@ -70,10 +70,21 @@ before_uninstall = "vending_tracker.uninstall.before_uninstall"
 # ---------------
 # Keep machine slot stock levels in sync with the native Stock Ledger and
 # validate vending-tagged stock entries.
+#
+# Dashboard Chart / Dashboard Settings on_update re-run the widget repair so
+# corrupted chart filters (which pop "Invalid filter: =") or a blank chart
+# config ("No Data") self-heal on every save — including the module-file import
+# that runs during bench migrate.
 doc_events = {
     "Stock Entry": {
         "validate": "vending_tracker.utils.vending_utils.validate_vending_stock_entry",
         "on_submit": "vending_tracker.utils.vending_utils.on_vending_stock_entry_submit",
         "on_cancel": "vending_tracker.utils.vending_utils.on_vending_stock_entry_cancel",
-    }
+    },
+    "Dashboard Chart": {
+        "on_update": "vending_tracker.install.repair_dashboard_widgets",
+    },
+    "Dashboard Settings": {
+        "on_update": "vending_tracker.install.repair_dashboard_settings",
+    },
 }
