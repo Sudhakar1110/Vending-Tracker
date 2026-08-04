@@ -165,6 +165,18 @@ for (const dt of fixtureDoctypes) {
             `fixtures/${scrub}.json: Server Script '${rec.name}' uses a top-level return; use frappe.response['message'] instead`
           );
         }
+        if (rec && rec.doctype === "Workflow") {
+          // v15 Workflow Document State requires the mandatory 'allow_edit'
+          // (Only Allow Edit For, Link to Role); a missing value fails fixture
+          // import with MandatoryError during install.
+          const states = Array.isArray(rec.states) ? rec.states : [];
+          for (const s of states) {
+            check(
+              !!s && !!s.allow_edit,
+              `fixtures/${scrub}.json: Workflow '${rec.name}' state '${s && s.state}' is missing 'allow_edit' (Only Allow Edit For)`
+            );
+          }
+        }
       }
     }
   }

@@ -8,6 +8,7 @@
   "send_email_alert": 0,
   "states": [
    {
+    "allow_edit": "Vending Staff",
     "doc_status": "0",
     "is_optional_state": 0,
     "state": "Draft",
@@ -15,6 +16,7 @@
     "update_value": null
    },
    {
+    "allow_edit": "Vending Manager",
     "doc_status": "1",
     "is_optional_state": 0,
     "state": "Submitted",
@@ -22,6 +24,7 @@
     "update_value": null
    },
    {
+    "allow_edit": "Vending Manager",
     "doc_status": "2",
     "is_optional_state": 0,
     "state": "Cancelled",
@@ -92,6 +95,7 @@
   "send_email_alert": 0,
   "states": [
    {
+    "allow_edit": "Stock User",
     "doc_status": "0",
     "is_optional_state": 0,
     "state": "Draft",
@@ -99,6 +103,7 @@
     "update_value": null
    },
    {
+    "allow_edit": "Stock Manager",
     "doc_status": "1",
     "is_optional_state": 0,
     "state": "Submitted",
@@ -106,6 +111,7 @@
     "update_value": null
    },
    {
+    "allow_edit": "Stock Manager",
     "doc_status": "2",
     "is_optional_state": 0,
     "state": "Cancelled",
