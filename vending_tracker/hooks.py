@@ -63,6 +63,7 @@ scheduler_events = {
 # Installation
 # ------------
 after_install = "vending_tracker.install.after_install"
+after_migrate = "vending_tracker.install.after_migrate"
 before_uninstall = "vending_tracker.uninstall.before_uninstall"
 
 # Document Events

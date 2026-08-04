@@ -2,16 +2,49 @@ import frappe
 
 VENDING_ITEM_GROUP = "Vending Products"
 
+# Workflow states referenced by the app's workflows (fixtures/workflow.json).
+# The Workflow Document State rows are mandatory Link fields to the "Workflow
+# State" master doctype, which Frappe does NOT create automatically. If these
+# records are missing, clicking any workflow state (badge, table link) opens
+# /app/workflow-state/{state} and 404s with "Workflow State X not found".
+WORKFLOW_STATES = ["Draft", "Submitted", "Cancelled"]
+
 
 def after_install():
 	"""Runs after `bench --site <site> install-app vending_tracker`.
 
-	Creates the Vending Products item group, configures role permissions on the
-	reused ERPNext masters, and seeds optional sample data.
+	Creates the workflow states the app's workflows depend on, the Vending
+	Products item group, configures role permissions on the reused ERPNext
+	masters, and seeds optional sample data.
 	"""
+	create_workflow_states()
 	create_vending_item_group()
 	setup_role_permissions()
 	create_sample_data()
+
+
+def after_migrate():
+	"""Runs on every `bench migrate`.
+
+	Re-ensures the workflow states exist so sites that installed the app before
+	they were created (or had them removed) self-heal on the next migrate.
+	"""
+	create_workflow_states()
+
+
+def create_workflow_states():
+	"""Create the Workflow State master records used by the app's workflows.
+
+	Idempotent: existing records are left untouched. The records are shared
+	with any other workflow on the site that uses the same state names, so they
+	are never deleted on uninstall.
+	"""
+	for state in WORKFLOW_STATES:
+		if frappe.db.exists("Workflow State", state):
+			continue
+		frappe.get_doc(
+			{"doctype": "Workflow State", "workflow_state_name": state}
+		).insert(ignore_permissions=True)
 
 
 def create_vending_item_group():
