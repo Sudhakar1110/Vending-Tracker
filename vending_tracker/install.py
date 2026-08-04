@@ -15,16 +15,28 @@ def after_install():
 
 
 def create_vending_item_group():
-	"""Create the root 'Vending Products' item group under 'All Item Groups'."""
+	"""Create the 'Vending Products' item group under 'All Item Groups'."""
 	if frappe.db.exists("Item Group", VENDING_ITEM_GROUP):
 		return
 
-	parent = frappe.db.exists("Item Group", "All Item Groups") or "All Item Groups"
+	root = "All Item Groups"
+	if not frappe.db.exists("Item Group", root):
+		# Fresh sites that haven't completed the ERPNext setup wizard may lack
+		# the standard root item group; create it so the link target exists.
+		frappe.get_doc(
+			{
+				"doctype": "Item Group",
+				"item_group_name": root,
+				"parent_item_group": None,
+				"is_group": 1,
+			}
+		).insert(ignore_permissions=True, ignore_mandatory=True)
+
 	frappe.get_doc(
 		{
 			"doctype": "Item Group",
 			"item_group_name": VENDING_ITEM_GROUP,
-			"parent_item_group": parent,
+			"parent_item_group": root,
 			"is_group": 0,
 		}
 	).insert(ignore_permissions=True, ignore_mandatory=True)
