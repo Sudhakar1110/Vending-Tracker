@@ -45,10 +45,17 @@ ERPNext v15+ must be installed on the site first (`required_apps = ["erpnext"]`)
 
 ## Workflow: Start to End
 
-### Document workflows
+**In plain words:** install the app → create a machine and its slots → stock it
+up → sell (by hand in the desk or automatically over IoT) → stock decreases in
+ERPNext → alerts and dashboards keep everyone informed. The one rule that keeps
+it all consistent: **the Stock Ledger (Bin) is the single source of truth** —
+slot stock, reports and the portal are all just views of it.
 
-Two Frappe workflows ship with the app, both mirroring the native docstatus
-flow **Draft → Submitted → Cancelled**:
+### 1. Document workflows
+
+Both workflows mirror the native docstatus flow **Draft → Submitted →
+Cancelled** (shown to operators in the desk and on the `/health` portal as the
+plain-language **New → Confirmed → Cancelled**):
 
 **Vending Sales Entry Workflow** — applied to `Vending Sales Entry`
 
@@ -86,9 +93,10 @@ flow **Draft → Submitted → Cancelled**:
 > Stock Entry) carry a **Workflow** button in the header. Clicking it opens a
 > dialog with a visual state diagram plus the states and transitions tables,
 > rendered live from the active workflow config, so operators can see who may
-> edit each state and who can submit or cancel.
+> edit each state and who can submit or cancel. The public `/health` portal
+> shows the same guide.
 
-### Operational flow (start to end)
+### 2. Operational flow (start to end)
 
 ```mermaid
 flowchart TD
@@ -96,13 +104,29 @@ flowchart TD
     B --> C[Create Vending Machine<br/>links a dedicated ERPNext warehouse]
     C --> D[Configure Machine Product Slots<br/>item, capacity, reorder threshold]
     D --> E[Restock: submit Stock Entry<br/>Material Receipt / Material Transfer into machine warehouse]
-    E --> F[Stock Ledger updates<br/>slot current_stock auto-synced]
-    F --> G[Record sale: submit Vending Sales Entry]
-    G --> H[auto Material Issue consumes machine stock]
-    H --> I[Alerts: Low Stock / High Sales / Restock Completed]
-    H --> J[Reports, dashboard charts & scheduler jobs]
-    H --> K[Cancel entry → Material Issue cancelled → stock restored]
+    E --> F[Stock Ledger moves stock in<br/>slot current_stock auto-synced]
+    F --> G[Record a sale]
+    G -->|in the desk: submit Vending Sales Entry| H[Workflow: New → Confirmed]
+    G -->|over IoT: sync_sales API| H
+    H --> I[auto Material Issue consumes machine stock<br/>through the Stock Ledger]
+    I --> J[Alerts: Low Stock / High Sales / Restock Completed]
+    I --> K[Reports, dashboard charts & scheduler jobs]
+    I --> L[/health portal: live status, no login/]
+    H -. cancel .-> M[Cancel → Material Issue cancelled → stock restored]
 ```
+
+### 3. IoT loop (for connected machines)
+
+```mermaid
+flowchart LR
+    Device[Vending Machine] -->|heartbeat API| HB[is_online = 1<br/>battery + temperature logged<br/>health log written]
+    Device -->|sync_sales API| S[Vending Sales Entries created]
+    Device -->|sync_stock API| SS[Slot stock synced from device]
+    HB -->|no heartbeat for N minutes| Off[Health check marks machine Offline<br/>+ Machine Offline alert email]
+    Off -->|next heartbeat arrives| HB
+```
+
+### Step by step
 
 1. **Install & setup** — install the app (`bench --site [site] install-app
    vending_tracker`) and run `bench migrate`. Assign the **Vending Staff**,
@@ -111,7 +135,9 @@ flowchart TD
 2. **Create the machine** — a `Vending Machine` record (id, name, type,
    location, IoT token). With *Auto Create Machine Warehouses* enabled (the
    default) its dedicated warehouse (`VM - <machine_id>`) is created
-   automatically; all of that machine's stock lives there.
+   automatically; all of that machine's stock lives there. For IoT machines,
+   the device registers itself through the `register` API and receives its
+   token.
 3. **Configure slots** — one `Machine Product Slot` per product position:
    link the machine and a **Vending Products** item, then set the slot number,
    maximum capacity and reorder threshold. Capacity and threshold are fetched
@@ -122,11 +148,12 @@ flowchart TD
    move stock in from a central warehouse. The Stock Ledger moves the stock
    and the slot's `current_stock` / `stock_status` are recomputed
    automatically; the **Restock Completed** notification fires.
-5. **Sell (Draft → Submitted)** — submit a `Vending Sales Entry` (machine,
-   item, quantity). The rate is taken from the item's Standard Selling price
-   list, the amount is computed, and a native `Material Issue` Stock Entry is
-   created and submitted automatically to consume the stock from the machine
-   warehouse — the Stock Ledger stays the single source of truth.
+5. **Sell (Draft → Submitted)** — record a `Vending Sales Entry` either in
+   the desk or automatically via the `sync_sales` IoT API. The rate is taken
+   from the item's Standard Selling price list, the amount is computed, and a
+   native `Material Issue` Stock Entry is created and submitted automatically
+   to consume the stock from the machine warehouse — the Stock Ledger stays
+   the single source of truth.
 6. **Alerts** — after a sale, slots at or below their reorder threshold raise
    a **Low Stock** alert (once per cycle), and sales at or above the **High
    Sales Threshold** (Vending Tracker Settings) notify Vending Managers.
@@ -137,9 +164,11 @@ flowchart TD
    same way.
 8. **Report & monitor** — the **Vending Tracker** workspace, 10 reports,
    6 number cards and 5 dashboard charts surface revenue, machine
-   utilisation, low stock and item performance. Scheduler jobs run machine
-   health checks and IoT synchronisation hourly, and low-stock detection,
-   revenue summaries and daily report emails daily.
+   utilisation, low stock and item performance. The public `/health` portal
+   shows live fleet status (machines, revenue, low stock, telemetry) with no
+   login. Scheduler jobs run machine health checks and IoT synchronisation
+   hourly, and low-stock detection, revenue summaries and daily report emails
+   daily.
 
 ## Fixtures & module files
 
