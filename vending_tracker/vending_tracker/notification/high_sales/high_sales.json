@@ -1,10 +1,10 @@
 {
  "channel": "Email",
- "condition": "doc.amount >= (frappe.db.get_single_value('Vending Tracker Settings', 'high_sales_threshold') or 500)",
+ "condition": "",
  "docstatus": 0,
  "doctype": "Notification",
  "document_type": "Vending Sales Entry",
- "enabled": 1,
+ "enabled": 0,
  "event": "Submit",
  "is_standard": 1,
  "message": "**High Sales Alert**\n\nA high-value vending sale has been recorded.\n\n- Machine: {{ doc.machine }}\n- Item: {{ doc.item }}\n- Quantity: {{ doc.quantity_sold }}\n- Amount: {{ doc.amount }}",

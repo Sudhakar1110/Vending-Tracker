@@ -104,6 +104,7 @@ def after_install():
 	"""
 	create_workflow_states()
 	repair_dashboard_widgets()
+	repair_notifications()
 	create_vending_item_group()
 	setup_role_permissions()
 	create_sample_data()
@@ -119,6 +120,7 @@ def after_migrate():
 	"""
 	create_workflow_states()
 	repair_dashboard_widgets()
+	repair_notifications()
 	create_sample_data()
 
 
@@ -208,6 +210,29 @@ def _restore_missing_chart_fields(name, module_doc):
 		if current in (None, ""):
 			frappe.db.set_value("Dashboard Chart", name, field, expected)
 			print(f"Vending Tracker: restored {field} on Dashboard Chart '{name}'")
+
+
+def repair_notifications(doc=None, method=None):
+	"""Disable Notification records whose condition uses ``frappe.db``.
+
+	Notification conditions are evaluated in a sandbox that exposes only
+	``doc``, ``nowdate`` and ``frappe.utils`` — ``frappe.db`` is NOT available
+	there, so such a condition raises AttributeError on every matching document
+	save/submit, which ``evaluate_alert`` rethrows as ValidationError (aborting
+	the operation, e.g. demo seeding during migrate). Standard module-file
+	sync normally replaces the condition, but a stale DB value must never break
+	a migrate, so any record still carrying one is disabled here.
+	"""
+	try:
+		for name in frappe.get_all("Notification", pluck="name"):
+			condition = frappe.db.get_value("Notification", name, "condition") or ""
+			if "frappe.db" in condition:
+				frappe.db.set_value(
+					"Notification", name, {"condition": "", "enabled": 0}
+				)
+				print(f"Vending Tracker: disabled Notification '{name}' with DB-invalid condition")
+	except Exception as exc:
+		print(f"Vending Tracker: notification repair skipped ({type(exc).__name__}: {exc})")
 
 
 def repair_dashboard_settings(doc=None, method=None):

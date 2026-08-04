@@ -7,6 +7,7 @@ from vending_tracker.utils.vending_utils import (
 	get_machine_warehouse,
 	get_selling_rate,
 	is_vending_item,
+	notify_high_sales,
 	notify_low_stock_for_item,
 	update_slot_stock,
 )
@@ -23,6 +24,7 @@ class VendingSalesEntry(Document):
 		self.create_material_issue()
 		update_slot_stock(machine=self.machine, item=self.item)
 		notify_low_stock_for_item(self.machine, self.item)
+		notify_high_sales(self)
 
 	def on_cancel(self):
 		self.cancel_stock_entry()

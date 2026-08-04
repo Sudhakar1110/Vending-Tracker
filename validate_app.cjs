@@ -271,6 +271,12 @@ for (const file of notificationFiles) {
       fs.existsSync(path.join(dir, name + ".md")),
       `${rel(dir)}: missing ${name}.md message template`
     );
+    // Conditions are sandboxed to doc/nowdate/frappe.utils; frappe.db is not
+    // importable there and raises AttributeError at every evaluation.
+    check(
+      !(doc.condition || "").includes("frappe.db"),
+      `${rel(dir)}: condition uses 'frappe.db' — DB access is unavailable in Notification conditions`
+    );
   }
 }
 

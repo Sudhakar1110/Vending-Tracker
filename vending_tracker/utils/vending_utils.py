@@ -342,6 +342,45 @@ def notify_low_stock_for_item(machine, item):
 			frappe.db.set_value("Machine Product Slot", slot.name, "low_stock_notified", 1)
 
 
+def notify_high_sales(sales_entry):
+	"""Notify managers when a submitted sale reaches the configured threshold.
+
+	The old standard 'High Sales' Notification is disabled because notification
+	conditions only expose doc/nowdate/frappe.utils — ``frappe.db`` is not
+	available there, so the threshold could not be read at eval time (and the
+	condition crashed every sales submit). The alert now runs here, in normal
+	Python, reading the Vending Tracker Settings value.
+	"""
+	threshold = flt(
+		frappe.db.get_single_value("Vending Tracker Settings", "high_sales_threshold") or 500
+	)
+	if threshold <= 0 or flt(sales_entry.amount) < threshold:
+		return
+
+	machine_name = (
+		frappe.db.get_value("Vending Machine", sales_entry.machine, "machine_name")
+		or sales_entry.machine
+	)
+	item_name = frappe.db.get_value("Item", sales_entry.item, "item_name") or sales_entry.item
+
+	subject = _("High Sales Alert: {0} at {1}").format(flt(sales_entry.amount), machine_name)
+	message = _(
+		"<p>A high-value vending sale has been recorded.</p>"
+		"<p>Machine: <b>{0}</b><br>Item: {1}<br>Quantity: {2}<br>Amount: <b>{3}</b></p>"
+	).format(machine_name, item_name, flt(sales_entry.quantity_sold), flt(sales_entry.amount))
+
+	create_notification_log(
+		subject, message, "Vending Sales Entry", sales_entry.name, role="Vending Manager"
+	)
+	send_email_to_role(
+		subject,
+		message,
+		role="Vending Manager",
+		reference_doctype="Vending Sales Entry",
+		reference_name=sales_entry.name,
+	)
+
+
 # ---------------------------------------------------------------------------
 # Number card methods (Custom type number cards call these whitelisted methods)
 # ---------------------------------------------------------------------------
