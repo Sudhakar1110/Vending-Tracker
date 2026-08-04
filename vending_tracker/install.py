@@ -563,16 +563,22 @@ def create_demo_slots(machines, created_items):
 		for idx, item_code in enumerate(created_items, start=1):
 			if frappe.db.exists("Machine Product Slot", {"machine": machine, "slot_number": idx}):
 				continue
-			frappe.get_doc(
-				{
-					"doctype": "Machine Product Slot",
-					"machine": machine,
-					"item": item_code,
-					"slot_number": idx,
-					"maximum_capacity": DEMO_SLOT_CAPACITY,
-					"reorder_threshold": 5,
-				}
-			).insert(ignore_permissions=True)
+			try:
+				frappe.get_doc(
+					{
+						"doctype": "Machine Product Slot",
+						"machine": machine,
+						"item": item_code,
+						"slot_number": idx,
+						"maximum_capacity": DEMO_SLOT_CAPACITY,
+						"reorder_threshold": 5,
+					}
+				).insert(ignore_permissions=True)
+			except Exception as exc:
+				# One bad slot (e.g. a notification condition crash) must never
+				# skip the entire seeding — mirror the per-row guard used by
+				# create_demo_sales().
+				print(f"Vending Tracker: demo slot skipped ({type(exc).__name__}: {exc})")
 
 
 def create_demo_stock(machines, created_items):

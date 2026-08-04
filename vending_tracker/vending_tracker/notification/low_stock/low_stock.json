@@ -1,6 +1,6 @@
 {
  "channel": "Email",
- "condition": "doc.reorder_threshold and doc.current_stock <= doc.reorder_threshold",
+ "condition": "doc.reorder_threshold and doc.current_stock != None and doc.current_stock <= doc.reorder_threshold",
  "docstatus": 0,
  "doctype": "Notification",
  "document_type": "Machine Product Slot",
