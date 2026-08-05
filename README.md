@@ -45,7 +45,7 @@ ERPNext v15+ must be installed on the site first (`required_apps = ["erpnext"]`)
 - **23 automations** — 6 scheduler jobs, 8 notifications (7 enabled + 1
   replaced), 5 document-event hooks and 4 doctype controller actions, plus IoT
   APIs, server scripts, workflows and install-time automation. See
-  [AUTOMATIONS.md](AUTOMATIONS.md) for the full verified inventory.
+  [automation.md](automation.md) for the full verified inventory.
 
 ## Workflow: Start to End
 
